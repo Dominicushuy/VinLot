@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useBetTypeDetails, useUpdateBetType } from "@/lib/hooks/use-bet-types";
@@ -22,15 +22,15 @@ import { BetTypeWinningRatioEditor } from "@/components/admin/bet-type-winning-r
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/use-toast";
 
-export default function BetTypeEditPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function BetTypeEditPage() {
+  // Sử dụng useParams hook để lấy tham số URL
+  const params = useParams();
+  const id = params.id as string;
+
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("general");
 
-  const { data: betType, isLoading } = useBetTypeDetails(params.id);
+  const { data: betType, isLoading } = useBetTypeDetails(id);
   const updateBetType = useUpdateBetType();
 
   const form = useForm<BetTypeFormValues>({

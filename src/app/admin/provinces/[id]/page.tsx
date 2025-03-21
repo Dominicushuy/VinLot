@@ -3,7 +3,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import {
@@ -30,14 +30,13 @@ import {
 import { ProvinceDaysSelector } from "@/components/admin/province-days-selector";
 import { Province } from "@/types";
 
-export default function ProvinceEditPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function ProvinceEditPage() {
+  // Sử dụng useParams hook để lấy tham số URL
+  const params = useParams();
+  const id = params.id as string;
   const router = useRouter();
 
-  const { data: province, isLoading } = useProvinceDetails(params.id);
+  const { data: province, isLoading } = useProvinceDetails(id);
   const updateProvince = useUpdateProvince();
 
   const form = useForm<ProvinceFormValues>({
