@@ -32,6 +32,7 @@ export type Database = {
     region: string;
     region_type: string;
     draw_days: string[];
+    is_active: boolean;
     created_at: string;
     updated_at: string;
   };
@@ -47,5 +48,4 @@ export type Database = {
     created_at: string;
     updated_at: string;
   };
-  // Các bảng khác...
 };

@@ -165,5 +165,6 @@ export interface Province {
   code?: string;
   region: "mien-bac" | "mien-trung" | "mien-nam";
   region_type: "M1" | "M2";
+  is_active: boolean;
   draw_days: string[];
 }

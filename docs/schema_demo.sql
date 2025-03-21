@@ -10,9 +10,11 @@ CREATE TABLE provinces (
   region VARCHAR(50) NOT NULL,               -- mien-bac, mien-trung, mien-nam
   region_type VARCHAR(2) NOT NULL,           -- M1, M2
   draw_days TEXT[] NOT NULL,                 -- Các ngày trong tuần có xổ số
+  is_active BOOLEAN DEFAULT TRUE,            -- Trạng thái hoạt động
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
 
 -- Index cho trường thường được query
 CREATE INDEX idx_provinces_region ON provinces(region);
