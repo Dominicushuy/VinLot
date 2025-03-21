@@ -117,6 +117,62 @@ CREATE INDEX idx_transactions_user_id ON transactions(user_id);
 CREATE INDEX idx_transactions_bet_id ON transactions(bet_id);
 CREATE INDEX idx_transactions_type ON transactions(type);
 
+-- Kích hoạt extension UUID
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Bảng crawler_config - lưu cấu hình crawling
+CREATE TABLE crawler_config (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  enabled BOOLEAN DEFAULT TRUE,
+  schedule JSONB DEFAULT '{"hour": 18, "minute": 30}',
+  regions TEXT[] DEFAULT ARRAY['mien-bac', 'mien-trung', 'mien-nam'],
+  retry_count INTEGER DEFAULT 3,
+  delay_between_requests INTEGER DEFAULT 1000,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Bảng crawler_logs - lưu log các lần crawl
+CREATE TABLE crawler_logs (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  date DATE NOT NULL,
+  time TIME WITHOUT TIME ZONE NOT NULL,
+  type VARCHAR(10) NOT NULL CHECK (type IN ('auto', 'manual')),
+  region VARCHAR(20) NOT NULL CHECK (region IN ('mien-bac', 'mien-trung', 'mien-nam')),
+  status VARCHAR(10) NOT NULL CHECK (status IN ('success', 'error')),
+  result_count INTEGER,
+  error TEXT,
+  result JSONB,
+  duration INTEGER,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tạo index cho các trường thường được query
+CREATE INDEX idx_crawler_logs_date ON crawler_logs(date);
+CREATE INDEX idx_crawler_logs_region ON crawler_logs(region);
+CREATE INDEX idx_crawler_logs_status ON crawler_logs(status);
+CREATE INDEX idx_crawler_logs_type ON crawler_logs(type);
+
+-- Thêm trigger để tự động cập nhật updated_at
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+   NEW.updated_at = NOW();
+   RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+CREATE TRIGGER update_crawler_config_updated_at
+  BEFORE UPDATE ON crawler_config
+  FOR EACH ROW
+  EXECUTE PROCEDURE update_updated_at_column();
+
+CREATE TRIGGER update_crawler_logs_updated_at
+  BEFORE UPDATE ON crawler_logs
+  FOR EACH ROW
+  EXECUTE PROCEDURE update_updated_at_column();
+
 -- Đảm bảo RLS được bật cho tất cả bảng (thường đã được bật mặc định trong Supabase)
 ALTER TABLE provinces ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rules ENABLE ROW LEVEL SECURITY;
@@ -154,6 +210,52 @@ CREATE POLICY "Public Access Bets" ON bets
 CREATE POLICY "Public Access Transactions" ON transactions
     USING (true)
     WITH CHECK (true);
+
+-- Bật RLS cho các bảng crawler
+ALTER TABLE crawler_config ENABLE ROW LEVEL SECURITY;
+ALTER TABLE crawler_logs ENABLE ROW LEVEL SECURITY;
+
+-- Policies cho bảng crawler_config
+-- Policy đọc cấu hình (ai cũng có thể đọc)
+CREATE POLICY "Public Read Crawler Config" ON crawler_config
+    FOR SELECT
+    USING (true);
+
+-- Policy chỉ admin có thể thêm/sửa/xóa cấu hình
+-- Trong môi trường demo, cho phép tất cả người dùng cập nhật
+CREATE POLICY "Public Mutation Crawler Config" ON crawler_config
+    FOR ALL
+    USING (true)
+    WITH CHECK (true);
+
+-- Policies cho bảng crawler_logs
+-- Policy đọc logs (ai cũng có thể đọc)
+CREATE POLICY "Public Read Crawler Logs" ON crawler_logs
+    FOR SELECT
+    USING (true);
+
+-- Policy thêm logs (cho phép API service thêm logs)
+-- Trong môi trường demo, cho phép tất cả người dùng thêm logs
+CREATE POLICY "Public Insert Crawler Logs" ON crawler_logs
+    FOR INSERT
+    WITH CHECK (true);
+
+-- Policy cập nhật logs (chỉ admin có thể sửa)
+-- Trong môi trường demo, cho phép tất cả người dùng cập nhật
+CREATE POLICY "Public Update Crawler Logs" ON crawler_logs
+    FOR UPDATE
+    USING (true)
+    WITH CHECK (true);
+
+-- Policy xóa logs (chỉ admin có thể xóa)
+-- Trong môi trường demo, cho phép tất cả người dùng xóa
+CREATE POLICY "Public Delete Crawler Logs" ON crawler_logs
+    FOR DELETE
+    USING (true);
+
+-- ========================================
+-- Dữ liệu mẫu
+-- ========================================
 
 -- Đầu Đuôi (dd)
 INSERT INTO rules (bet_type_id, name, description, digit_count, region_rules, variants, winning_ratio)
