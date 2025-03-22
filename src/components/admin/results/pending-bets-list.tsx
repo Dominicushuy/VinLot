@@ -1,7 +1,7 @@
 // src/components/admin/results/pending-bets-list.tsx
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -43,14 +43,8 @@ export function PendingBetsList({ onAllProcessed }: PendingBetsListProps) {
   const [hasMore, setHasMore] = useState(false);
   const pageSize = 10;
 
-  // Sử dụng useRef để tránh gọi API nhiều lần
-  const fetchRef = useRef(false);
-
   // Fetch pending bets
   const fetchPendingBets = async (pageToFetch = 1, append = false) => {
-    // Kiểm tra nếu đang loading thì không fetch
-    if (isLoading) return;
-
     try {
       setIsLoading(true);
       const response = await fetch(
@@ -85,16 +79,7 @@ export function PendingBetsList({ onAllProcessed }: PendingBetsListProps) {
 
   // Load initial data
   useEffect(() => {
-    // Kiểm tra xem đã fetch chưa để tránh gọi API nhiều lần
-    if (!fetchRef.current) {
-      fetchRef.current = true;
-      fetchPendingBets();
-    }
-
-    // Cleanup function
-    return () => {
-      fetchRef.current = false;
-    };
+    fetchPendingBets();
   }, []);
 
   // Process all pending bets

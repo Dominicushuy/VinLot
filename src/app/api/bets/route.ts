@@ -34,8 +34,6 @@ export async function POST(request: Request) {
       userId,
     } = validationResult.data;
 
-    console.log("Received bet data:", validationResult.data);
-
     // Kiểm tra user
     const { data: user, error: userError } = await supabase
       .from("users")
