@@ -1,3 +1,4 @@
+// src/components/user/sidebar.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -9,19 +10,27 @@ import {
   TicketIcon,
   BarChart3,
   History,
-  Settings,
+  TrendingUp,
   Menu,
   X,
+  HelpCircle,
+  UserIcon,
   LogOut,
-  TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { formatCurrency } from "@/lib/utils";
 
-interface SidebarProps {
+// Giả lập dữ liệu user demo
+const demoUser = {
+  name: "Nguyễn Văn A",
+  balance: 10000000,
+};
+
+interface UserSidebarProps {
   className?: string;
 }
 
-export function Sidebar({ className }: SidebarProps) {
+export function UserSidebar({ className }: UserSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -81,9 +90,9 @@ export function Sidebar({ className }: SidebarProps) {
       icon: <BarChart3 size={20} />,
     },
     {
-      name: "Quản trị",
-      href: "/admin",
-      icon: <Settings size={20} />,
+      name: "Trợ giúp",
+      href: "/help",
+      icon: <HelpCircle size={20} />,
     },
   ];
 
@@ -131,7 +140,7 @@ export function Sidebar({ className }: SidebarProps) {
                   X
                 </div>
                 <span className="text-lg font-semibold text-lottery-primary">
-                  Quản lý Xổ số
+                  Xổ số Online
                 </span>
               </div>
             )}
@@ -148,6 +157,23 @@ export function Sidebar({ className }: SidebarProps) {
           )}
         </div>
 
+        {/* User Info */}
+        {(!collapsed || isMobile) && (
+          <div className="p-4 border-b">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-full bg-lottery-secondary flex items-center justify-center text-white font-bold">
+                {demoUser.name.charAt(0)}
+              </div>
+              <div>
+                <div className="font-medium">{demoUser.name}</div>
+                <div className="text-sm text-green-600 font-medium">
+                  {formatCurrency(demoUser.balance)}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Navigation */}
         <nav className="flex-1 py-4 overflow-y-auto">
           <ul className="space-y-1 px-2">
@@ -157,7 +183,8 @@ export function Sidebar({ className }: SidebarProps) {
                   href={item.href}
                   className={cn(
                     "flex items-center px-3 py-2 rounded-md group transition-colors",
-                    pathname === item.href
+                    pathname === item.href ||
+                      (item.href !== "/" && pathname.startsWith(item.href))
                       ? "bg-lottery-primary text-white"
                       : "text-gray-700 hover:bg-lottery-primary/10"
                   )}
@@ -179,11 +206,25 @@ export function Sidebar({ className }: SidebarProps) {
               "flex items-center px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 cursor-pointer"
             )}
           >
-            <LogOut size={20} />
-            {(!collapsed || isMobile) && (
-              <span className="ml-3 font-medium">Đăng xuất</span>
+            {collapsed && !isMobile ? (
+              <LogOut size={20} />
+            ) : (
+              <>
+                <UserIcon size={20} />
+                <span className="ml-3 font-medium">Tài khoản</span>
+              </>
             )}
           </div>
+          {(!collapsed || isMobile) && (
+            <div
+              className={cn(
+                "flex items-center px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 cursor-pointer mt-2"
+              )}
+            >
+              <LogOut size={20} />
+              <span className="ml-3 font-medium">Đăng xuất</span>
+            </div>
+          )}
         </div>
       </aside>
     </>

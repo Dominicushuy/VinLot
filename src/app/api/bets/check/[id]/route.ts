@@ -1,9 +1,10 @@
-import { NextResponse } from "next/server";
+// src/app/api/bets/check/[id]/route.ts
+import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase/client";
 import { checkBetResult } from "@/lib/utils/bet-result-processor";
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {

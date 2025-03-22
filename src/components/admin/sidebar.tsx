@@ -1,133 +1,75 @@
+// src/components/admin/sidebar.tsx
 "use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { AlertTriangle } from "lucide-react";
+import {
+  LayoutDashboard,
+  ListTodo,
+  Map,
+  Award,
+  CheckSquare,
+  Settings,
+  Users,
+  FileText,
+  AlertTriangle,
+  LogOut,
+  Database,
+} from "lucide-react";
 
-// Định nghĩa các mục menu
 // Định nghĩa các mục menu
 const menuItems = [
   {
     title: "Dashboard",
     href: "/admin",
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-5 w-5"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-        />
-      </svg>
-    ),
+    icon: <LayoutDashboard className="h-5 w-5" />,
   },
   {
     title: "Loại cược",
     href: "/admin/bet-types",
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-5 w-5"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-        />
-      </svg>
-    ),
+    icon: <ListTodo className="h-5 w-5" />,
   },
   {
     title: "Đài xổ số",
     href: "/admin/provinces",
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-5 w-5"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-        />
-      </svg>
-    ),
+    icon: <Map className="h-5 w-5" />,
   },
   {
     title: "Kết quả xổ số",
     href: "/admin/results",
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-5 w-5"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-        />
-      </svg>
-    ),
+    icon: <Award className="h-5 w-5" />,
   },
   {
     title: "Đối soát kết quả",
     href: "/admin/process-results",
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-5 w-5"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
-        />
-      </svg>
-    ),
+    icon: <CheckSquare className="h-5 w-5" />,
+  },
+  {
+    title: "Quản lý người dùng",
+    href: "/admin/users",
+    icon: <Users className="h-5 w-5" />,
+  },
+  {
+    title: "Báo cáo tài chính",
+    href: "/admin/reports",
+    icon: <FileText className="h-5 w-5" />,
+  },
+  {
+    title: "Cấu hình hệ thống",
+    href: "/admin/settings",
+    icon: <Settings className="h-5 w-5" />,
+  },
+  {
+    title: "Crawler Logs",
+    href: "/admin/crawler-logs",
+    icon: <Database className="h-5 w-5" />,
   },
   {
     title: "Công cụ đối soát nâng cao",
     href: "/admin/advanced-process",
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-5 w-5"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
-        />
-      </svg>
-    ),
-    highlight: true, // Nếu có tính năng highlight
+    icon: <AlertTriangle className="h-5 w-5" />,
+    highlight: true,
   },
 ];
 
@@ -135,31 +77,80 @@ export function AdminSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 min-h-screen bg-white shadow-md">
-      <div className="p-4 bg-lottery-primary text-white">
-        <h2 className="text-xl font-bold">Admin Dashboard</h2>
+    <aside className="w-64 min-h-screen bg-gray-900 text-white">
+      <div className="p-4 bg-gray-800">
+        <div className="flex items-center space-x-2">
+          <div className="w-8 h-8 bg-lottery-primary rounded-md flex items-center justify-center text-white font-bold">
+            X
+          </div>
+          <h2 className="text-xl font-bold">Admin Panel</h2>
+        </div>
       </div>
+
       <nav className="mt-4">
+        <div className="px-4 py-2 text-xs uppercase font-semibold text-gray-400">
+          Quản lý chính
+        </div>
         <ul>
-          {menuItems.map((item) => (
+          {menuItems.slice(0, 5).map((item) => (
             <li key={item.href}>
               <Link
                 href={item.href}
                 className={cn(
-                  "flex items-center px-4 py-3 text-gray-700 hover:bg-gray-100",
+                  "flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 transition-colors",
                   pathname === item.href ||
                     (item.href !== "/admin" && pathname.startsWith(item.href))
-                    ? "bg-gray-100 border-l-4 border-lottery-primary"
+                    ? "bg-gray-800 border-l-4 border-lottery-primary"
                     : ""
                 )}
               >
-                <span className="mr-2">{item.icon}</span>
+                <span className="mr-3">{item.icon}</span>
                 {item.title}
+                {item.highlight && (
+                  <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 p-1 text-xs font-medium">
+                    !
+                  </span>
+                )}
+              </Link>
+            </li>
+          ))}
+        </ul>
+
+        <div className="px-4 py-2 mt-6 text-xs uppercase font-semibold text-gray-400">
+          Cài đặt & Báo cáo
+        </div>
+        <ul>
+          {menuItems.slice(5).map((item) => (
+            <li key={item.href}>
+              <Link
+                href={item.href}
+                className={cn(
+                  "flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 transition-colors",
+                  pathname === item.href ||
+                    (item.href !== "/admin" && pathname.startsWith(item.href))
+                    ? "bg-gray-800 border-l-4 border-lottery-primary"
+                    : ""
+                )}
+              >
+                <span className="mr-3">{item.icon}</span>
+                {item.title}
+                {item.highlight && (
+                  <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 p-1 text-xs font-medium">
+                    !
+                  </span>
+                )}
               </Link>
             </li>
           ))}
         </ul>
       </nav>
+
+      <div className="absolute bottom-0 w-full p-4 border-t border-gray-800">
+        <button className="flex items-center text-gray-300 hover:text-white w-full">
+          <LogOut className="h-5 w-5 mr-3" />
+          Đăng xuất
+        </button>
+      </div>
     </aside>
   );
 }

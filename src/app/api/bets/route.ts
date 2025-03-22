@@ -131,7 +131,7 @@ export async function POST(request: Request) {
       bets.push({
         user_id: userId,
         bet_date: new Date(betDate).toISOString().split("T")[0],
-        draw_date: new Date(drawDate).toISOString().split("T")[0],
+        draw_date: formatLocalDate(drawDate.toISOString()),
         region_type: regionType,
         province_id: provinceId,
         bet_type: betType,
@@ -208,4 +208,12 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
+}
+
+function formatLocalDate(date: string): string {
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }

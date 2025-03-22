@@ -52,11 +52,11 @@ module.exports = {
         },
         // Thêm màu sắc tùy chỉnh cho ứng dụng xổ số
         lottery: {
-          primary: "#d32f2f", // Màu đỏ cho các giải thưởng đặc biệt
-          secondary: "#1976d2", // Màu xanh dương cho menu và CTA
-          accent: "#ffd700", // Màu vàng cho highlight
-          winner: "#4caf50", // Màu xanh lá cho vé trúng giải
-          loser: "#9e9e9e", // Màu xám cho vé không trúng
+          primary: "#1e40af", // Màu xanh lam đậm (blue-800) thay vì màu đỏ #d32f2f
+          secondary: "#1976d2", // Giữ nguyên
+          accent: "#ffd700", // Giữ nguyên
+          winner: "#4caf50", // Giữ nguyên
+          loser: "#9e9e9e", // Giữ nguyên
         },
       },
       borderRadius: {
