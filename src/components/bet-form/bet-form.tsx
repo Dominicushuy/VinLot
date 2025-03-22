@@ -60,6 +60,7 @@ export function BetForm() {
       numbers: [],
       selectionMethod: "manual",
       denomination: 10000,
+      userId: demoUser.id,
     },
   });
 
@@ -79,6 +80,12 @@ export function BetForm() {
       });
       return;
     }
+
+    // console.log("Form state:", methods.formState);
+    // console.log("Form values:", methods.getValues());
+    // console.log("Total amount:", totalAmount);
+    // console.log("Is balance enough:", isBalanceEnough);
+    // console.log("Form errors:", methods.formState.errors);
 
     // Mở dialog xác nhận
     setIsSummaryOpen(true);

@@ -75,8 +75,6 @@ export function RegionSelection({
   // Tỉnh miền Bắc
   const northProvinces = getRegionProvinces("mien-bac");
 
-  console.log(northProvinces);
-
   // Tỉnh miền Trung
   const centralProvinces = getRegionProvinces("mien-trung");
   // Tỉnh miền Nam
