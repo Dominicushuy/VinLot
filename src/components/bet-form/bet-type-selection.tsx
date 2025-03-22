@@ -1,4 +1,4 @@
-// src/components/bet-form/bet-type-selection.tsx (cập nhật)
+// src/components/bet-form/bet-type-selection.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -29,6 +29,74 @@ interface BetTypeSelectionProps {
   setTotalAmount: (amount: number) => void;
   setPotentialWin: (amount: number) => void;
 }
+
+// Helper function để lấy tỷ lệ thưởng
+const getWinningRatio = (betTypeData: any, betVariant?: string): string => {
+  if (!betTypeData) return "N/A";
+
+  // Parse winning_ratio nếu là string
+  const winningRatio =
+    typeof betTypeData.winning_ratio === "string"
+      ? JSON.parse(betTypeData.winning_ratio)
+      : betTypeData.winning_ratio;
+
+  // Xác định tỷ lệ dựa trên cấu trúc và biến thể
+  if (betVariant) {
+    // Nếu có biến thể và winning_ratio là object
+    if (typeof winningRatio === "object" && winningRatio !== null) {
+      return winningRatio[betVariant] ? `1:${winningRatio[betVariant]}` : "N/A";
+    }
+  } else {
+    // Nếu không có biến thể
+    if (typeof winningRatio === "number") {
+      return `1:${winningRatio}`;
+    } else if (typeof winningRatio === "object" && winningRatio !== null) {
+      // Nếu là object nhưng không có biến thể, lấy giá trị đầu tiên
+      const firstValue = Object.values(winningRatio)[0];
+      return typeof firstValue === "number" ? `1:${firstValue}` : "N/A";
+    }
+  }
+
+  return "N/A"; // Fallback
+};
+
+// Helper function để lấy hệ số nhân
+const getBetMultiplier = (
+  betTypeData: any,
+  regionType: string,
+  betVariant?: string
+): string => {
+  if (!betTypeData) return "N/A";
+
+  // Parse region_rules nếu là string
+  const regionRules =
+    typeof betTypeData.region_rules === "string"
+      ? JSON.parse(betTypeData.region_rules)
+      : betTypeData.region_rules;
+
+  // Kiểm tra xem region_rules có chứa regionType
+  if (regionRules && regionRules[regionType]) {
+    const betMultipliers = regionRules[regionType].betMultipliers;
+
+    // Nếu có biến thể và betMultipliers là object
+    if (
+      betVariant &&
+      typeof betMultipliers === "object" &&
+      betMultipliers !== null
+    ) {
+      return betMultipliers[betVariant]?.toString() || "N/A";
+    } else if (typeof betMultipliers === "number") {
+      // Nếu betMultipliers là số
+      return betMultipliers.toString();
+    } else if (typeof betMultipliers === "object" && betMultipliers !== null) {
+      // Nếu là object nhưng không có biến thể xác định, lấy giá trị đầu tiên
+      const firstValue = Object.values(betMultipliers)[0];
+      return typeof firstValue === "number" ? firstValue.toString() : "N/A";
+    }
+  }
+
+  return "N/A"; // Fallback
+};
 
 export function BetTypeSelection({
   setTotalAmount,
@@ -408,7 +476,7 @@ export function BetTypeSelection({
         </div>
       )}
 
-      {/* Thông tin về tỷ lệ cược - giữ nguyên */}
+      {/* Thông tin về tỷ lệ cược - đã cải thiện */}
       {betType && currentBetTypeData && (
         <div className="mt-4 p-4 bg-gray-50 rounded-md">
           <h3 className="font-medium mb-2">Thông tin tỷ lệ</h3>
@@ -416,41 +484,13 @@ export function BetTypeSelection({
             <div>
               <p className="text-sm">
                 <span className="font-medium">Tỷ lệ thưởng:</span>{" "}
-                {betVariant
-                  ? `1:${
-                      typeof currentBetTypeData.winning_ratio === "string"
-                        ? JSON.parse(currentBetTypeData.winning_ratio)[
-                            betVariant
-                          ]
-                        : currentBetTypeData.winning_ratio[betVariant]
-                    }`
-                  : `1:${
-                      typeof currentBetTypeData.winning_ratio === "string"
-                        ? JSON.parse(currentBetTypeData.winning_ratio)
-                        : currentBetTypeData.winning_ratio
-                    }`}
+                {getWinningRatio(currentBetTypeData, betVariant)}
               </p>
             </div>
             <div>
               <p className="text-sm">
                 <span className="font-medium">Hệ số nhân:</span>{" "}
-                {betVariant
-                  ? `${
-                      typeof currentBetTypeData.region_rules === "string"
-                        ? JSON.parse(currentBetTypeData.region_rules)[
-                            regionType
-                          ].betMultipliers[betVariant]
-                        : currentBetTypeData.region_rules[regionType]
-                            .betMultipliers[betVariant]
-                    }`
-                  : `${
-                      typeof currentBetTypeData.region_rules === "string"
-                        ? JSON.parse(currentBetTypeData.region_rules)[
-                            regionType
-                          ].betMultipliers
-                        : currentBetTypeData.region_rules[regionType]
-                            .betMultipliers
-                    }`}
+                {getBetMultiplier(currentBetTypeData, regionType, betVariant)}
               </p>
             </div>
           </div>
