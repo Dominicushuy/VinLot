@@ -1,15 +1,27 @@
-// src/lib/validators/bet-form-validator.ts (cập nhật)
+// src/lib/validators/bet-form-validator.ts
 import { z } from "zod";
 
 // Schema validation cho form đặt cược
 export const betFormSchema = z.object({
   // Ngày cược và xổ
-  betDate: z.date({
-    required_error: "Vui lòng chọn ngày đặt cược",
-  }),
-  drawDate: z.date({
-    required_error: "Vui lòng chọn ngày xổ",
-  }),
+  betDate: z.union([
+    z.date(),
+    z
+      .string()
+      .refine((val) => !isNaN(new Date(val).getTime()), {
+        message: "Định dạng ngày không hợp lệ",
+      })
+      .transform((val) => new Date(val)),
+  ]),
+  drawDate: z.union([
+    z.date(),
+    z
+      .string()
+      .refine((val) => !isNaN(new Date(val).getTime()), {
+        message: "Định dạng ngày không hợp lệ",
+      })
+      .transform((val) => new Date(val)),
+  ]),
 
   // Miền và tỉnh
   regionType: z.enum(["M1", "M2"], {
@@ -36,6 +48,9 @@ export const betFormSchema = z.object({
     })
     .min(1000, "Mệnh giá tối thiểu là 1,000đ")
     .max(100000000, "Mệnh giá tối đa là 100,000,000đ"),
+  userId: z.string({
+    required_error: "UserId là bắt buộc",
+  }),
 });
 
 // Type cho form đặt cược

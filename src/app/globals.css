@@ -160,3 +160,23 @@
 .lottery-table span {
   animation: fadeIn 0.3s ease-out;
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-container, .print-container * {
+    visibility: visible;
+  }
+  .print-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  
+  /* Ẩn các phần tử không cần thiết khi in */
+  .no-print {
+    display: none !important;
+  }
+}

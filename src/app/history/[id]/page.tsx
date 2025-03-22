@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { usePDF } from "@/lib/hooks/use-pdf";
 import { BetDetail } from "@/components/history/bet-detail";
 import Link from "next/link";
+import { BetReceiptDialog } from "@/components/history/bet-receipt-dialog";
 
 // Map các trạng thái sang Việt ngữ và màu sắc
 const statusMap = {
@@ -31,7 +32,13 @@ export default function BetDetailPage() {
   const [loading, setLoading] = useState(true);
   const [results, setResults] = useState<any>(null);
 
-  const { generateBetReceipt } = usePDF();
+  const {
+    generateBetReceipt,
+    previewOpen,
+    setPreviewOpen,
+    currentBet,
+    handlePrint,
+  } = usePDF();
 
   useEffect(() => {
     async function fetchBetDetails() {
@@ -65,6 +72,36 @@ export default function BetDetailPage() {
           .select("*")
           .eq("bet_type_id", betData.bet_type)
           .single();
+
+        // Parse các trường JSONB nếu cần
+        if (betTypeData) {
+          if (typeof betTypeData.variants === "string") {
+            try {
+              betTypeData.variants = JSON.parse(betTypeData.variants);
+            } catch (e) {
+              console.error("Error parsing variants:", e);
+              betTypeData.variants = [];
+            }
+          }
+
+          if (typeof betTypeData.region_rules === "string") {
+            try {
+              betTypeData.region_rules = JSON.parse(betTypeData.region_rules);
+            } catch (e) {
+              console.error("Error parsing region_rules:", e);
+              betTypeData.region_rules = {};
+            }
+          }
+
+          if (typeof betTypeData.winning_ratio === "string") {
+            try {
+              betTypeData.winning_ratio = JSON.parse(betTypeData.winning_ratio);
+            } catch (e) {
+              console.error("Error parsing winning_ratio:", e);
+              betTypeData.winning_ratio = {};
+            }
+          }
+        }
 
         setBetType(betTypeData);
 
@@ -121,12 +158,20 @@ export default function BetDetailPage() {
 
   // Format tên loại cược
   const betTypeName = betType?.name || bet.bet_type;
-  const betVariantName = bet.bet_variant
-    ? betType?.variants
-      ? JSON.parse(betType?.variants).find((v) => v.id === bet.bet_variant)
-          ?.name
-      : bet.bet_variant
-    : undefined;
+  let betVariantName;
+
+  if (bet.bet_variant && betType?.variants) {
+    // Xử lý an toàn với variants
+    const variants = betType.variants;
+    if (Array.isArray(variants)) {
+      const variant = variants.find((v) => v.id === bet.bet_variant);
+      betVariantName = variant?.name;
+    } else {
+      betVariantName = bet.bet_variant;
+    }
+  } else {
+    betVariantName = bet.bet_variant;
+  }
 
   const handleGeneratePDF = () => {
     generateBetReceipt({
@@ -293,6 +338,13 @@ export default function BetDetailPage() {
           />
         </div>
       </div>
+
+      <BetReceiptDialog
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        betData={currentBet}
+        onPrint={handlePrint}
+      />
     </div>
   );
 }
