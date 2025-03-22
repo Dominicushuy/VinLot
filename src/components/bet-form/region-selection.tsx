@@ -1,4 +1,5 @@
 // src/components/bet-form/region-selection.tsx
+
 "use client";
 
 import { useEffect } from "react";
@@ -7,7 +8,6 @@ import { useProvincesByRegion } from "@/lib/hooks/use-provinces";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { BetFormValues } from "@/lib/validators/bet-form-validator";
-import { getDayOfWeekSlug } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
 interface RegionSelectionProps {
@@ -36,28 +36,51 @@ export function RegionSelection({
     }
   }, [regionType, resetField, isMultiRegion]);
 
-  // Danh sách tỉnh theo miền
-  const getRegionProvinces = (region: string) => {
-    if (!provincesByRegion || isLoading) return [];
-    return provincesByRegion[region] || [];
+  // Lấy thứ trong tuần từ ngày đã chọn
+  const getSelectedDayOfWeek = () => {
+    if (!drawDate) return null;
+    const date = new Date(drawDate);
+    const day = date.getDay();
+
+    const daysMapping = [
+      "chu-nhat",
+      "thu-hai",
+      "thu-ba",
+      "thu-tu",
+      "thu-nam",
+      "thu-sau",
+      "thu-bay",
+    ];
+    return daysMapping[day];
   };
 
-  // Tỉnh miền Bắc
-  const northProvinces = getRegionProvinces("mien-bac");
-  // Tỉnh miền Trung
-  const centralProvinces = getRegionProvinces("mien-trung");
-  // Tỉnh miền Nam
-  const southProvinces = getRegionProvinces("mien-nam");
-
-  // Lọc tỉnh theo ngày trong tuần nếu có ngày xổ
+  // Lọc tỉnh theo ngày xổ
   const filterProvincesByDay = (provinces: any[]) => {
     if (!drawDate) return provinces;
 
-    const daySlug = getDayOfWeekSlug(drawDate);
+    const daySlug = getSelectedDayOfWeek();
+    if (!daySlug) return provinces;
+
     return provinces.filter(
       (p) => p.draw_days.includes(daySlug) && p.is_active
     );
   };
+
+  // Danh sách tỉnh theo miền
+  const getRegionProvinces = (region: string) => {
+    if (!provincesByRegion || isLoading) return [];
+    return provincesByRegion.filter((p) => p.region === region);
+  };
+
+  // Tỉnh miền Bắc
+  const northProvinces = getRegionProvinces("mien-bac");
+
+  console.log(northProvinces);
+
+  // Tỉnh miền Trung
+  const centralProvinces = getRegionProvinces("mien-trung");
+  // Tỉnh miền Nam
+  const southProvinces = getRegionProvinces("mien-nam");
 
   // Áp dụng filter ngày
   const filteredNorthProvinces = filterProvincesByDay(northProvinces);
@@ -66,11 +89,11 @@ export function RegionSelection({
 
   // Lấy tên tỉnh từ ID
   const getProvinceNames = () => {
-    const allProvinces = [
-      ...northProvinces,
-      ...centralProvinces,
-      ...southProvinces,
-    ];
+    if (!provincesByRegion) return [];
+
+    // Gộp tất cả các tỉnh để tìm kiếm
+    const allProvinces = Object.values(provincesByRegion).flat();
+
     return provinces.map((id) => {
       const province = allProvinces.find((p) => p.province_id === id);
       return province ? province.name : id;
@@ -78,6 +101,7 @@ export function RegionSelection({
   };
 
   const provinceNames = getProvinceNames();
+  const selectedDayOfWeek = getSelectedDayOfWeek();
 
   return (
     <div className="space-y-6">
@@ -118,6 +142,17 @@ export function RegionSelection({
             <Label htmlFor="multi-region">Chọn nhiều miền</Label>
           </div>
         </div>
+
+        {drawDate && (
+          <div className="mb-4 text-sm">
+            <div className="inline-flex items-center px-3 py-1 bg-blue-50 text-blue-700 rounded-full">
+              <span className="mr-1">Ngày xổ:</span>
+              <span className="font-medium capitalize">
+                {selectedDayOfWeek?.replace("-", " ")}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -129,9 +164,13 @@ export function RegionSelection({
           {isLoading ? (
             <p className="text-sm italic">Đang tải dữ liệu...</p>
           ) : filteredNorthProvinces.length === 0 ? (
-            <p className="text-sm text-gray-500">
-              Không có đài xổ số cho ngày này
-            </p>
+            <div className="p-4 bg-gray-50 rounded-md text-center">
+              <p className="text-sm text-gray-500">
+                {drawDate
+                  ? "Không có đài xổ số cho ngày này"
+                  : "Vui lòng chọn ngày xổ số"}
+              </p>
+            </div>
           ) : (
             <div className="space-y-2 max-h-60 overflow-y-auto p-2 border rounded-md">
               {filteredNorthProvinces.map((province) => (
@@ -173,9 +212,13 @@ export function RegionSelection({
           {isLoading ? (
             <p className="text-sm italic">Đang tải dữ liệu...</p>
           ) : filteredCentralProvinces.length === 0 ? (
-            <p className="text-sm text-gray-500">
-              Không có đài xổ số cho ngày này
-            </p>
+            <div className="p-4 bg-gray-50 rounded-md text-center">
+              <p className="text-sm text-gray-500">
+                {drawDate
+                  ? "Không có đài xổ số cho ngày này"
+                  : "Vui lòng chọn ngày xổ số"}
+              </p>
+            </div>
           ) : (
             <div className="space-y-2 max-h-60 overflow-y-auto p-2 border rounded-md">
               {filteredCentralProvinces.map((province) => (
@@ -217,9 +260,13 @@ export function RegionSelection({
           {isLoading ? (
             <p className="text-sm italic">Đang tải dữ liệu...</p>
           ) : filteredSouthProvinces.length === 0 ? (
-            <p className="text-sm text-gray-500">
-              Không có đài xổ số cho ngày này
-            </p>
+            <div className="p-4 bg-gray-50 rounded-md text-center">
+              <p className="text-sm text-gray-500">
+                {drawDate
+                  ? "Không có đài xổ số cho ngày này"
+                  : "Vui lòng chọn ngày xổ số"}
+              </p>
+            </div>
           ) : (
             <div className="space-y-2 max-h-60 overflow-y-auto p-2 border rounded-md">
               {filteredSouthProvinces.map((province) => (
