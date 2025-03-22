@@ -18,7 +18,7 @@ import { CalendarIcon } from "lucide-react";
 
 // Fake user data for demo purposes
 const demoUser = {
-  id: "user-001",
+  id: "3a652095-83ce-4c36-aa89-cef8bdeaf7c8",
   name: "Nguyễn Văn A",
   balance: 10000000, // 10 triệu VND
 };

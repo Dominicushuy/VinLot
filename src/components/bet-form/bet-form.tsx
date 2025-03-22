@@ -23,10 +23,11 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { usePlaceBet } from "@/lib/hooks/use-place-bet";
 
 // Fake user data for demo purposes
 const demoUser = {
-  id: "user-001",
+  id: "3a652095-83ce-4c36-aa89-cef8bdeaf7c8",
   name: "Nguyễn Văn A",
   balance: 10000000, // 10 triệu VND
 };
@@ -43,6 +44,9 @@ export function BetForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [savedBets, setSavedBets] = useState<any[]>([]);
   const [isSavedBetsOpen, setIsSavedBetsOpen] = useState(false);
+
+  // *** Mutation để đặt cược
+  const placeBet = usePlaceBet();
 
   // Form với validation
   const methods = useForm<BetFormValues>({
@@ -65,7 +69,7 @@ export function BetForm() {
   }, [totalAmount]);
 
   // Xử lý khi submit form
-  const onSubmit = (data: BetFormValues) => {
+  const onSubmit = () => {
     // Kiểm tra lại số dư
     if (!isBalanceEnough) {
       toast({
@@ -85,12 +89,18 @@ export function BetForm() {
     try {
       setIsSubmitting(true);
 
-      // Giả lập gọi API đặt cược
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
       const formData = methods.getValues();
 
-      // Giả lập thành công
+      // Thêm userId (demo)
+      const betData = {
+        ...formData,
+        userId: demoUser.id,
+      };
+
+      // Gọi API đặt cược
+      await placeBet.mutateAsync(betData);
+
+      // Hiển thị thông báo thành công
       toast({
         title: "Đặt cược thành công",
         description: `Đã đặt ${
@@ -116,10 +126,11 @@ export function BetForm() {
       // Reset state
       setTotalAmount(0);
       setPotentialWin(0);
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Lỗi đặt cược",
-        description: "Có lỗi xảy ra khi đặt cược. Vui lòng thử lại.",
+        description:
+          error.message || "Có lỗi xảy ra khi đặt cược. Vui lòng thử lại.",
         variant: "destructive",
       });
     } finally {

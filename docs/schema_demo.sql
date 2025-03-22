@@ -155,6 +155,13 @@ CREATE INDEX idx_crawler_logs_region ON crawler_logs(region);
 CREATE INDEX idx_crawler_logs_status ON crawler_logs(status);
 CREATE INDEX idx_crawler_logs_type ON crawler_logs(type);
 
+
+-- Relationships
+ALTER TABLE bets
+ADD CONSTRAINT bets_province_id_fkey 
+FOREIGN KEY (province_id) 
+REFERENCES provinces (province_id);
+
 -- Thêm trigger để tự động cập nhật updated_at
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
