@@ -1,4 +1,3 @@
-// src/app/history/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -20,6 +19,7 @@ import {
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { BetHistoryTable } from "@/components/history/bet-history-table";
 import { BetSummaryCard } from "@/components/history/bet-summary-card";
+import { MultipleCheckDialog } from "@/components/history/multiple-check-dialog";
 import { formatCurrency } from "@/lib/utils";
 
 // Fake user ID for demo
@@ -36,6 +36,7 @@ export default function HistoryPage() {
   const [betType, setBetType] = useState<string>("all");
   const [provinceId, setProvinceId] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [isCheckDialogOpen, setIsCheckDialogOpen] = useState(false);
 
   // Load dữ liệu
   const { data: bets, isLoading } = useUserBets({
@@ -80,6 +81,13 @@ export default function HistoryPage() {
       <h1 className="text-3xl font-bold mb-6 text-lottery-primary">
         Lịch sử cược
       </h1>
+
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold">Tổng hợp</h2>
+        <Button variant="secondary" onClick={() => setIsCheckDialogOpen(true)}>
+          Kiểm tra nhiều phiếu
+        </Button>
+      </div>
 
       <div className="mb-8 grid grid-cols-1 md:grid-cols-4 gap-4">
         <BetSummaryCard
@@ -193,8 +201,8 @@ export default function HistoryPage() {
               variant="outline"
               onClick={() => {
                 setStatus("all");
-                setBetType("");
-                setProvinceId("");
+                setBetType("all");
+                setProvinceId("all");
                 setSearchTerm("");
                 setDateRange(undefined);
               }}
@@ -242,6 +250,12 @@ export default function HistoryPage() {
           />
         </TabsContent>
       </Tabs>
+
+      {/* Dialog kiểm tra nhiều phiếu */}
+      <MultipleCheckDialog
+        open={isCheckDialogOpen}
+        onOpenChange={setIsCheckDialogOpen}
+      />
     </div>
   );
 }

@@ -1,4 +1,3 @@
-// src/app/history/[id]/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -12,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { usePDF } from "@/lib/hooks/use-pdf";
 import { BetDetail } from "@/components/history/bet-detail";
+import { CheckBetButton } from "@/components/history/check-bet-button";
 import Link from "next/link";
 import { BetReceiptDialog } from "@/components/history/bet-receipt-dialog";
 
@@ -195,6 +195,15 @@ export default function BetDetailPage() {
           <Link href="/history">
             <Button variant="outline">Quay lại</Button>
           </Link>
+          {bet.status === "pending" && (
+            <CheckBetButton
+              betId={betId}
+              onResultsChecked={(results) => {
+                // Refresh the page to see updated results
+                window.location.reload();
+              }}
+            />
+          )}
           <Button variant="lottery" onClick={handleGeneratePDF}>
             In phiếu
           </Button>
