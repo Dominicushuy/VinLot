@@ -16,9 +16,6 @@ export default function UserLayout({
         <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-gray-50">
           <div className="container mx-auto">{children}</div>
         </main>
-        <footer className="bg-white border-t py-3 px-6 text-center text-sm text-gray-500">
-          Hệ thống quản lý xổ số - © 2025
-        </footer>
       </div>
       <Toaster />
     </div>

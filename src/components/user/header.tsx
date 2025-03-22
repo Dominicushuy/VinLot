@@ -1,7 +1,7 @@
 // src/components/user/header.tsx
 "use client";
 
-import { User, Bell, Search, DollarSign } from "lucide-react";
+import { User, Bell, Search, DollarSign, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
@@ -75,6 +75,18 @@ export function UserHeader() {
             {formatCurrency(demoUser.balance)}
           </Button>
         </div>
+
+        {/* Admin Button - NEW */}
+        <Link href="/admin">
+          <Button
+            size="sm"
+            variant="outline"
+            className="bg-slate-100 hover:bg-slate-200 hidden md:flex"
+          >
+            <Shield size={16} className="mr-2 text-lottery-primary" />
+            <span>Admin</span>
+          </Button>
+        </Link>
 
         {/* Notification */}
         <Button size="sm" variant="ghost" className="relative">

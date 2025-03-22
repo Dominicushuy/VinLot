@@ -16,7 +16,9 @@ import {
   AlertTriangle,
   LogOut,
   Database,
+  Home,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // Định nghĩa các mục menu
 const menuItems = [
@@ -78,13 +80,25 @@ export function AdminSidebar() {
 
   return (
     <aside className="w-64 min-h-screen bg-gray-900 text-white">
-      <div className="p-4 bg-gray-800">
+      <div className="p-4 bg-gray-800 flex justify-between items-center">
         <div className="flex items-center space-x-2">
           <div className="w-8 h-8 bg-lottery-primary rounded-md flex items-center justify-center text-white font-bold">
             X
           </div>
           <h2 className="text-xl font-bold">Admin Panel</h2>
         </div>
+
+        {/* User Mode Button - NEW */}
+        <Link href="/">
+          <Button
+            size="sm"
+            variant="outline"
+            className="bg-gray-700 hover:bg-gray-600 border-gray-600 text-white"
+          >
+            <Home className="h-4 w-4 mr-1" />
+            <span className="text-xs">User</span>
+          </Button>
+        </Link>
       </div>
 
       <nav className="mt-4">

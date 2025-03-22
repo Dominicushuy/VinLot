@@ -15,20 +15,66 @@ import { CheckBetButton } from "@/components/history/check-bet-button";
 import Link from "next/link";
 import { BetReceiptDialog } from "@/components/history/bet-receipt-dialog";
 
+// Định nghĩa type cho bet status
+type BetStatus = "pending" | "won" | "lost";
+
 // Map các trạng thái sang Việt ngữ và màu sắc
-const statusMap = {
+const statusMap: Record<BetStatus, { text: string; color: string }> = {
   pending: { text: "Đang chờ", color: "bg-yellow-100 text-yellow-800" },
   won: { text: "Đã thắng", color: "bg-green-100 text-green-800" },
   lost: { text: "Đã thua", color: "bg-red-100 text-red-800" },
 };
 
+// Type định nghĩa cho Bet
+interface Bet {
+  id: string;
+  user_id: string;
+  bet_date: string;
+  draw_date: string;
+  region_type: "M1" | "M2";
+  province_id: string;
+  bet_type: string;
+  bet_variant?: string;
+  numbers: string[];
+  selection_method: string;
+  denomination: number;
+  total_amount: number;
+  potential_win_amount: number;
+  status: BetStatus;
+  win_amount?: number;
+}
+
+// Type cho Province
+interface Province {
+  id: string;
+  province_id: string;
+  name: string;
+  code?: string;
+  region: string;
+  region_type: string;
+  draw_days: string[];
+  is_active: boolean;
+}
+
+// Type cho BetType
+interface BetType {
+  id: string;
+  bet_type_id: string;
+  name: string;
+  description?: string;
+  digit_count?: number;
+  region_rules: any;
+  variants: any;
+  winning_ratio: any;
+}
+
 export default function BetDetailPage() {
   const params = useParams();
   const betId = params.id as string;
 
-  const [bet, setBet] = useState<any>(null);
-  const [province, setProvince] = useState<any>(null);
-  const [betType, setBetType] = useState<any>(null);
+  const [bet, setBet] = useState<Bet | null>(null);
+  const [province, setProvince] = useState<Province | null>(null);
+  const [betType, setBetType] = useState<BetType | null>(null);
   const [loading, setLoading] = useState(true);
   const [results, setResults] = useState<any>(null);
 
@@ -55,7 +101,7 @@ export default function BetDetailPage() {
         if (betError) throw betError;
         if (!betData) throw new Error("Không tìm thấy cược");
 
-        setBet(betData);
+        setBet(betData as Bet);
 
         // Lấy thông tin tỉnh
         const { data: provinceData } = await supabase
@@ -64,7 +110,7 @@ export default function BetDetailPage() {
           .eq("province_id", betData.province_id)
           .single();
 
-        setProvince(provinceData);
+        setProvince(provinceData as Province);
 
         // Lấy thông tin loại cược
         const { data: betTypeData } = await supabase
@@ -103,7 +149,7 @@ export default function BetDetailPage() {
           }
         }
 
-        setBetType(betTypeData);
+        setBetType(betTypeData as BetType);
 
         // Lấy kết quả xổ số (nếu có)
         if (betData.status !== "pending") {
@@ -151,10 +197,14 @@ export default function BetDetailPage() {
     );
   }
 
-  const status = statusMap[bet.status] || {
-    text: bet.status,
-    color: "bg-gray-100 text-gray-800",
-  };
+  // Kiểm tra status và sử dụng type assertion để TypeScript biết đây là khóa hợp lệ
+  const status =
+    bet.status in statusMap
+      ? statusMap[bet.status]
+      : {
+          text: bet.status,
+          color: "bg-gray-100 text-gray-800",
+        };
 
   // Format tên loại cược
   const betTypeName = betType?.name || bet.bet_type;
@@ -322,13 +372,15 @@ export default function BetDetailPage() {
                     <div className="mt-2 flex justify-between">
                       <p className="text-green-700">Tổng tiền thắng</p>
                       <p className="font-bold text-green-700">
-                        {formatCurrency(bet.win_amount)}
+                        {formatCurrency(bet.win_amount || 0)}
                       </p>
                     </div>
                     <div className="mt-1 flex justify-between">
                       <p className="text-green-700">Lợi nhuận</p>
                       <p className="font-bold text-green-700">
-                        {formatCurrency(bet.win_amount - bet.total_amount)}
+                        {formatCurrency(
+                          (bet.win_amount || 0) - bet.total_amount
+                        )}
                       </p>
                     </div>
                   </div>

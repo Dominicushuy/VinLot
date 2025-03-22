@@ -21,6 +21,7 @@ import { BetHistoryTable } from "@/components/history/bet-history-table";
 import { BetSummaryCard } from "@/components/history/bet-summary-card";
 import { MultipleCheckDialog } from "@/components/history/multiple-check-dialog";
 import { formatCurrency } from "@/lib/utils";
+import { DateRange } from "react-day-picker";
 
 // Fake user ID for demo
 const DEMO_USER_ID = "3a652095-83ce-4c36-aa89-cef8bdeaf7c8";
@@ -30,20 +31,28 @@ export default function HistoryPage() {
   const [status, setStatus] = useState<"all" | "pending" | "won" | "lost">(
     "all"
   );
-  const [dateRange, setDateRange] = useState<
-    { from: Date; to: Date } | undefined
-  >(undefined);
+  // Thay đổi kiểu dữ liệu để tương thích với DateRange từ react-day-picker
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [betType, setBetType] = useState<string>("all");
   const [provinceId, setProvinceId] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [isCheckDialogOpen, setIsCheckDialogOpen] = useState(false);
 
+  // Hàm xử lý thay đổi range date
+  const handleDateRangeChange = (range: DateRange | undefined) => {
+    setDateRange(range);
+  };
+
   // Load dữ liệu
   const { data: bets, isLoading } = useUserBets({
     userId: DEMO_USER_ID,
     status: status !== "all" ? status : undefined,
-    startDate: dateRange?.from.toISOString().split("T")[0],
-    endDate: dateRange?.to.toISOString().split("T")[0],
+    startDate: dateRange?.from
+      ? dateRange.from.toISOString().split("T")[0]
+      : undefined,
+    endDate: dateRange?.to
+      ? dateRange.to.toISOString().split("T")[0]
+      : undefined,
     betType: betType === "all" ? undefined : betType,
     provinceId: provinceId === "all" ? undefined : provinceId,
   });
@@ -116,7 +125,7 @@ export default function HistoryPage() {
         <BetSummaryCard
           title="Lợi nhuận"
           value={formatCurrency(netResult)}
-          subValue={`${((netResult / totalAmount) * 100 || 0).toFixed(1)}%`}
+          subValue={`${((netResult / (totalAmount || 1)) * 100).toFixed(1)}%`}
           icon="trending-up"
           valueColor={netResult >= 0 ? "text-green-600" : "text-red-500"}
         />
@@ -130,7 +139,10 @@ export default function HistoryPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="dateRange">Thời gian</Label>
-              <DateRangePicker value={dateRange} onChange={setDateRange} />
+              <DateRangePicker
+                value={dateRange}
+                onChange={handleDateRangeChange}
+              />
             </div>
 
             <div className="space-y-2">
@@ -216,7 +228,9 @@ export default function HistoryPage() {
       <Tabs
         defaultValue="all"
         value={status}
-        onValueChange={(value) => setStatus(value as any)}
+        onValueChange={(value) =>
+          setStatus(value as "all" | "pending" | "won" | "lost")
+        }
       >
         <TabsList className="mb-6">
           <TabsTrigger value="all">Tất cả</TabsTrigger>
