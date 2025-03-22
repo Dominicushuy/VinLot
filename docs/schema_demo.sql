@@ -30,6 +30,7 @@ CREATE TABLE rules (
   region_rules JSONB NOT NULL,                -- Lưu quy tắc theo từng miền
   variants JSONB,                             -- Các biến thể của loại cược
   winning_ratio JSONB NOT NULL,               -- Tỷ lệ thưởng
+  is_active BOOLEAN DEFAULT TRUE,             -- Trạng thái hoạt động
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

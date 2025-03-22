@@ -1,3 +1,4 @@
+// src/app/admin/results/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -12,9 +13,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CrawlerConfig } from "@/components/admin/results/crawler-config";
 import { ManualCrawler } from "@/components/admin/results/manual-crawler";
 import { CrawlerLogs } from "@/components/admin/results/crawler-logs";
+import { LotteryResults } from "@/components/admin/results/lottery-results";
 
 export default function ResultsAdminPage() {
-  const [activeTab, setActiveTab] = useState("config");
+  const [activeTab, setActiveTab] = useState("results"); // Default to results tab
 
   return (
     <div>
@@ -54,10 +56,15 @@ export default function ResultsAdminPage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-6">
+          <TabsTrigger value="results">Kết quả xổ số</TabsTrigger>
           <TabsTrigger value="config">Cấu hình crawler</TabsTrigger>
           <TabsTrigger value="manual">Crawl thủ công</TabsTrigger>
           <TabsTrigger value="logs">Lịch sử crawl</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="results">
+          <LotteryResults />
+        </TabsContent>
 
         <TabsContent value="config">
           <CrawlerConfig />

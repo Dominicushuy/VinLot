@@ -134,3 +134,29 @@
 .number-cell.selected {
   @apply bg-lottery-primary text-white;
 }
+
+.lottery-table {
+  @apply w-full border-collapse;
+}
+
+.lottery-table th {
+  @apply bg-gray-100 p-2 border font-medium text-gray-700;
+}
+
+.lottery-table td {
+  @apply p-2 border text-center;
+}
+
+.lottery-table-container {
+  @apply overflow-x-auto;
+}
+
+/* Animation khi hiển thị số */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.lottery-table span {
+  animation: fadeIn 0.3s ease-out;
+}
