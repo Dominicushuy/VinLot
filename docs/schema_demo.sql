@@ -524,7 +524,36 @@ VALUES ('vungtau', 'Vũng Tàu', 'XSVT', 'mien-nam', 'M1', ARRAY['thu-ba']);
 INSERT INTO provinces (province_id, name, code, region, region_type, draw_days)
 VALUES ('baclieu', 'Bạc Liêu', 'XSBL', 'mien-nam', 'M1', ARRAY['thu-ba']);
 
--- Và nhiều tỉnh khác từ miền Nam
+-- Thêm các tỉnh miền Trung còn thiếu
+INSERT INTO provinces (province_id, name, code, region, region_type, draw_days, is_active)
+VALUES 
+  ('gialai', 'Gia Lai', 'XSGL', 'mien-trung', 'M1', ARRAY['thu-sau'], true),
+  ('ninhthuan', 'Ninh Thuận', 'XSNT', 'mien-trung', 'M1', ARRAY['thu-sau'], true),
+  ('quangtri', 'Quảng Trị', 'XSQT', 'mien-trung', 'M1', ARRAY['thu-nam'], true),
+  ('quangbinh', 'Quảng Bình', 'XSQB', 'mien-trung', 'M1', ARRAY['thu-nam'], true),
+  ('binhdinh', 'Bình Định', 'XSBDI', 'mien-trung', 'M1', ARRAY['thu-nam'], true),
+  ('kontum', 'Kon Tum', 'XSKT', 'mien-trung', 'M1', ARRAY['chu-nhat'], true),
+  ('daknong', 'Đắk Nông', 'XSDNO', 'mien-trung', 'M1', ARRAY['thu-bay'], true),
+  ('quangngai', 'Quảng Ngãi', 'XSQNG', 'mien-trung', 'M1', ARRAY['thu-bay'], true);
+
+-- Thêm các tỉnh miền Nam còn thiếu
+INSERT INTO provinces (province_id, name, code, region, region_type, draw_days, is_active)
+VALUES 
+  ('vinhlong', 'Vĩnh Long', 'XSVL', 'mien-nam', 'M1', ARRAY['thu-sau'], true),
+  ('binhduong', 'Bình Dương', 'XSBD', 'mien-nam', 'M1', ARRAY['thu-sau'], true),
+  ('travinh', 'Trà Vinh', 'XSTV', 'mien-nam', 'M1', ARRAY['thu-sau'], true),
+  ('dongnai', 'Đồng Nai', 'XSDN', 'mien-nam', 'M1', ARRAY['thu-tu'], true),
+  ('cantho', 'Cần Thơ', 'XSCT', 'mien-nam', 'M1', ARRAY['thu-tu'], true),
+  ('soctrang', 'Sóc Trăng', 'XSST', 'mien-nam', 'M1', ARRAY['thu-tu'], true),
+  ('tayninh', 'Tây Ninh', 'XSTN', 'mien-nam', 'M1', ARRAY['thu-nam'], true),
+  ('angiang', 'An Giang', 'XSAG', 'mien-nam', 'M1', ARRAY['thu-nam'], true),
+  ('binhthuan', 'Bình Thuận', 'XSBTH', 'mien-nam', 'M1', ARRAY['thu-nam'], true),
+  ('longan', 'Long An', 'XSLA', 'mien-nam', 'M1', ARRAY['thu-bay'], true),
+  ('binhphuoc', 'Bình Phước', 'XSBP', 'mien-nam', 'M1', ARRAY['thu-bay'], true),
+  ('haugiang', 'Hậu Giang', 'XSHG', 'mien-nam', 'M1', ARRAY['thu-bay'], true),
+  ('tiengiang', 'Tiền Giang', 'XSTG', 'mien-nam', 'M1', ARRAY['chu-nhat'], true),
+  ('kiengiang', 'Kiên Giang', 'XSKG', 'mien-nam', 'M1', ARRAY['chu-nhat'], true),
+  ('dalat', 'Đà Lạt', 'XSDL', 'mien-nam', 'M1', ARRAY['chu-nhat'], true);
 
 -- Kết quả Miền Bắc ngày 2025-03-21
 INSERT INTO results (

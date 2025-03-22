@@ -54,6 +54,7 @@ async function fetchWithRetry(
   delayMs: number
 ): Promise<string> {
   try {
+    console.log(`Fetching URL: ${url}`);
     const response = await axios.get(url);
     return response.data;
   } catch (error) {
@@ -225,7 +226,7 @@ function extractMienNamTrungData(table: Element): any {
 /**
  * Lấy dữ liệu xổ số cho một ngày và miền cụ thể
  * @param mien - Tên miền (mien-bac, mien-trung, mien-nam)
- * @param dayOfWeek - Tên ngày (thu-hai, thu-ba, ...)
+ * @param dayOfWeek - Thứ trong tuần (thu-hai, thu-ba, ...)
  * @param config - Cấu hình crawler
  * @returns Dữ liệu xổ số
  */
@@ -235,8 +236,10 @@ async function layDuLieuNgay(
   config: { baseUrl: string; maxRetries: number; delayBetweenRequests: number }
 ): Promise<any> {
   try {
-    console.log(`Đang lấy dữ liệu ${mien} - ${dayOfWeek}...`);
+    // URL theo format: baseUrl/[mien]/[thu-...].html
     const url = `${config.baseUrl}/${mien}/${dayOfWeek}.html`;
+
+    console.log(`Đang lấy dữ liệu ${mien} - ${dayOfWeek} từ URL: ${url}`);
 
     // Lấy HTML từ trang web
     const html = await fetchWithRetry(
@@ -259,6 +262,7 @@ async function layDuLieuNgay(
       }
       duLieu = extractMienBacData(boxKqxs);
     } else {
+      // Lưu ý: Sử dụng selector chính xác như script gốc
       const targetTable = document.querySelector("table.bkqmiennam");
       if (!targetTable) {
         console.log(
@@ -297,6 +301,17 @@ function getDayOfWeek(dateStr: string): string {
 }
 
 /**
+ * Lấy ngày hôm qua từ một ngày cụ thể
+ * @param date - Ngày gốc
+ * @returns Ngày hôm qua dưới dạng yyyy-mm-dd
+ */
+function getYesterday(date: Date): string {
+  const yesterday = new Date(date);
+  yesterday.setDate(date.getDate() - 1);
+  return yesterday.toISOString().split("T")[0];
+}
+
+/**
  * Hàm chính để chạy crawler
  * @param params - Tham số cho crawler
  * @returns Kết quả xổ số
@@ -314,6 +329,7 @@ export async function runCrawler(
 
     // Xác định thứ trong tuần từ ngày
     const dayOfWeek = getDayOfWeek(date);
+    console.log(`Ngày ${date} là ${dayOfWeek}`);
 
     // Cấu hình cho crawler
     const config = {
@@ -322,7 +338,7 @@ export async function runCrawler(
       delayBetweenRequests: delayBetweenRequests,
     };
 
-    // Lấy dữ liệu
+    // Lấy dữ liệu sử dụng thứ trong tuần
     const duLieu = await layDuLieuNgay(region, dayOfWeek, config);
 
     // Tạo cấu trúc kết quả
@@ -335,7 +351,7 @@ export async function runCrawler(
         tongSoNgay: 1,
         thuDaLay: dayOfWeek,
         ngayDaLay: date,
-        quyTacApDung: "Lấy dữ liệu theo thời gian cụ thể của từng miền",
+        quyTacApDung: "Lấy dữ liệu theo thứ trong tuần",
       },
       duLieu: {},
     };
@@ -376,12 +392,29 @@ export async function runScheduledCrawler(): Promise<any> {
       return { success: false, message: "Crawler is disabled" };
     }
 
-    // Lấy ngày hiện tại
+    // Lấy ngày và giờ hiện tại
     const now = new Date();
-    const formattedDate = now.toISOString().split("T")[0];
+    const currentHour = now.getHours();
 
-    // Xác định thứ trong tuần
-    const dayOfWeek = getDayOfWeek(formattedDate);
+    // Quyết định ngày lấy dữ liệu dựa trên giờ hiện tại
+    let targetDate: string;
+    let dayOfWeek: string;
+
+    // Nếu giờ hiện tại bé hơn 16h (4 giờ chiều), lấy dữ liệu của ngày hôm qua
+    if (currentHour < 16) {
+      targetDate = getYesterday(now);
+      dayOfWeek = getDayOfWeek(targetDate);
+      console.log(
+        `Giờ hiện tại < 16h, lấy kết quả của ngày hôm qua: ${targetDate} (${dayOfWeek})`
+      );
+    } else {
+      // Ngược lại, lấy dữ liệu của ngày hiện tại
+      targetDate = now.toISOString().split("T")[0];
+      dayOfWeek = getDayOfWeek(targetDate);
+      console.log(
+        `Giờ hiện tại >= 16h, lấy kết quả của ngày hôm nay: ${targetDate} (${dayOfWeek})`
+      );
+    }
 
     // Chạy crawler cho từng miền
     const results = [];
@@ -393,7 +426,7 @@ export async function runScheduledCrawler(): Promise<any> {
       try {
         // Chạy crawler và lấy kết quả
         const result = await runCrawler({
-          date: formattedDate,
+          date: targetDate,
           region,
           retryCount: configData.retry_count,
           delayBetweenRequests: configData.delay_between_requests,
@@ -407,7 +440,7 @@ export async function runScheduledCrawler(): Promise<any> {
 
         // Tạo log entry
         logEntries.push({
-          date: formattedDate,
+          date: targetDate,
           time: new Date().toISOString().split("T")[1].substring(0, 8),
           type: "auto",
           region,
@@ -428,7 +461,7 @@ export async function runScheduledCrawler(): Promise<any> {
 
         // Tạo log entry lỗi
         logEntries.push({
-          date: formattedDate,
+          date: targetDate,
           time: new Date().toISOString().split("T")[1].substring(0, 8),
           type: "auto",
           region,

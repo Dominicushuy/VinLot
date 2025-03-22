@@ -1,4 +1,3 @@
-// src/components/admin/results/lottery-results.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -23,25 +22,36 @@ import {
 import { NorthResult } from "./north-result";
 import { SouthCentralResult } from "./south-central-result";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
+import { CalendarIcon } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 export function LotteryResults() {
   const [region, setRegion] = useState<
     "mien-bac" | "mien-trung" | "mien-nam" | "all"
   >("all");
-  const [provinceId, setProvinceId] = useState<string | undefined>("all");
+  const [provinceId, setProvinceId] = useState<string>("all");
   const [activeTab, setActiveTab] = useState<string>("all");
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [actualResultDate, setActualResultDate] = useState<string | null>(null);
 
-  // Luôn lấy kết quả mới nhất, không cần truyền date
+  // Lấy kết quả xổ số với các bộ lọc
   const { data: resultsData, isLoading } = useLotteryResults({
     region: region === "all" ? undefined : region,
     provinceId: provinceId === "all" ? undefined : provinceId,
+    date: selectedDate ? format(selectedDate, "yyyy-MM-dd") : undefined,
   });
 
   const { data: provincesByRegion, isLoading: isLoadingProvinces } =
     useProvincesByRegion();
-
-  console.log({ provincesByRegion, resultsData });
 
   // Theo dõi khi resultsData thay đổi để lấy ngày kết quả
   useEffect(() => {
@@ -73,17 +83,26 @@ export function LotteryResults() {
       const allResults: any[] = [];
 
       // Miền Bắc
-      if (resultsByRegion["mien-bac"]) {
+      if (
+        resultsByRegion["mien-bac"] &&
+        resultsByRegion["mien-bac"].length > 0
+      ) {
         allResults.push(...resultsByRegion["mien-bac"]);
       }
 
       // Miền Trung
-      if (resultsByRegion["mien-trung"]) {
+      if (
+        resultsByRegion["mien-trung"] &&
+        resultsByRegion["mien-trung"].length > 0
+      ) {
         allResults.push(...resultsByRegion["mien-trung"]);
       }
 
       // Miền Nam
-      if (resultsByRegion["mien-nam"]) {
+      if (
+        resultsByRegion["mien-nam"] &&
+        resultsByRegion["mien-nam"].length > 0
+      ) {
         allResults.push(...resultsByRegion["mien-nam"]);
       }
 
@@ -106,18 +125,32 @@ export function LotteryResults() {
     }
   };
 
+  // Xử lý khi ngày được chọn
+  const handleDateSelect = (date: Date | undefined) => {
+    setSelectedDate(date);
+  };
+
+  // Format ngày hiển thị trên button
+  const formatDisplayDate = (date?: Date) => {
+    return date ? format(date, "dd/MM/yyyy") : "Chọn ngày";
+  };
+
+  const clearDateFilter = () => {
+    setSelectedDate(undefined);
+  };
+
   return (
     <div className="space-y-6">
       <Card className="mb-6">
         <CardHeader>
           <CardTitle>Bộ lọc kết quả xổ số</CardTitle>
           <CardDescription>
-            Xem kết quả xổ số mới nhất theo miền và tỉnh thành
+            Xem kết quả xổ số theo miền, tỉnh thành và ngày
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row gap-4">
-            {actualResultDate && (
+            {actualResultDate && !selectedDate && (
               <div className="flex-1 bg-blue-50 p-3 rounded-md border border-blue-100">
                 <p className="text-blue-800">
                   <span className="font-semibold">Kết quả mới nhất:</span>{" "}
@@ -126,15 +159,53 @@ export function LotteryResults() {
               </div>
             )}
 
+            {/* Date selector */}
+            <div className="w-full md:w-1/3">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !selectedDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {formatDisplayDate(selectedDate)}
+                    {selectedDate && (
+                      <span
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          clearDateFilter();
+                        }}
+                        className="ml-auto text-xs bg-gray-200 hover:bg-gray-300 rounded-full px-2 py-1"
+                      >
+                        ✕
+                      </span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={handleDateSelect}
+                    initialFocus
+                    locale={vi}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
             {/* Region selector */}
             <div className="w-full md:w-1/3">
               <Select
-                value={region || "all"}
-                onValueChange={(value) => {
-                  setRegion((value as any) || undefined);
-                  setProvinceId(undefined); // Reset province when region changes
-                  if (value) {
-                    setActiveTab(value as string);
+                value={region}
+                onValueChange={(value: any) => {
+                  setRegion(value);
+                  setProvinceId("all"); // Reset province when region changes
+                  if (value !== "all") {
+                    setActiveTab(value);
                   } else {
                     setActiveTab("all");
                   }
@@ -155,16 +226,16 @@ export function LotteryResults() {
             {/* Province selector */}
             <div className="w-full md:w-1/3">
               <Select
-                value={provinceId || "all"}
-                onValueChange={(value) => setProvinceId(value || undefined)}
-                disabled={!region || isLoadingProvinces}
+                value={provinceId}
+                onValueChange={(value) => setProvinceId(value)}
+                disabled={!provincesByRegion || isLoadingProvinces}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Chọn tỉnh/thành" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tất cả tỉnh/thành</SelectItem>
-                  {region &&
+                  {region !== "all" &&
                     provincesByRegion &&
                     provincesByRegion[region]?.map((province: any) => (
                       <SelectItem
@@ -202,8 +273,25 @@ export function LotteryResults() {
             <p className="text-lg text-gray-600 mb-4">
               Không tìm thấy kết quả xổ số nào
             </p>
-            <p className="text-sm text-gray-500 mb-6">
-              Vui lòng kiểm tra lại các bộ lọc hoặc thử lại sau.
+            <p className="text-sm text-gray-500">
+              {selectedDate ? (
+                <>
+                  Không có kết quả cho ngày {format(selectedDate, "dd/MM/yyyy")}
+                  .{region !== "all" && ` Thử chọn ngày khác hoặc miền khác.`}
+                </>
+              ) : region !== "all" ? (
+                <>
+                  Không có kết quả cho miền{" "}
+                  {region === "mien-bac"
+                    ? "Bắc"
+                    : region === "mien-trung"
+                    ? "Trung"
+                    : "Nam"}
+                  {provinceId !== "all" ? ` và tỉnh đã chọn` : ""}.
+                </>
+              ) : (
+                "Vui lòng kiểm tra lại các bộ lọc hoặc thử lại sau."
+              )}
             </p>
           </CardContent>
         </Card>

@@ -1,17 +1,17 @@
-// src/lib/hooks/use-lottery-results.ts
 import { useQuery } from "@tanstack/react-query";
 import { getTables } from "@/lib/supabase/client";
 
 export interface ResultQueryParams {
   region?: "mien-bac" | "mien-trung" | "mien-nam";
   provinceId?: string;
+  date?: string; // Thêm tham số date
 }
 
 export function useLotteryResults(params: ResultQueryParams = {}) {
-  const { region, provinceId } = params;
+  const { region, provinceId, date } = params;
 
   return useQuery({
-    queryKey: ["lottery-results", { region, provinceId }],
+    queryKey: ["lottery-results", { region, provinceId, date }], // Thêm date vào queryKey
     queryFn: async () => {
       // Bước 1: Lấy tất cả các tỉnh
       const { data: provinces, error: provincesError } = await getTables()
@@ -46,8 +46,13 @@ export function useLotteryResults(params: ResultQueryParams = {}) {
         .limit(30); // Lấy 30 kết quả mới nhất
 
       // Lọc theo tỉnh nếu được chỉ định
-      if (provinceId) {
+      if (provinceId && provinceId !== "all") {
         resultsQuery = resultsQuery.eq("province_id", provinceId);
+      }
+
+      // Lọc theo ngày nếu có
+      if (date) {
+        resultsQuery = resultsQuery.eq("date", date);
       }
 
       const { data: resultsData, error: resultsError } = await resultsQuery;
@@ -58,18 +63,21 @@ export function useLotteryResults(params: ResultQueryParams = {}) {
         );
       }
 
-      console.log("Results data:", resultsData);
-
       // Bước 3: Kết hợp kết quả xổ số với thông tin tỉnh
       const resultsWithProvinces = resultsData
         .map((result: any) => {
           const province = provinces.find(
             (p: any) => p.province_id === result.province_id
           );
-          if (!province) return null;
 
-          // Nếu có filter region và tỉnh không thuộc region đó, bỏ qua
-          if (region && province.region !== region) return null;
+          if (!province) {
+            return null;
+          }
+
+          // Nếu có filter region khác "all" và tỉnh không thuộc region đó, bỏ qua
+          if (region && region !== "all" && province.region !== region) {
+            return null;
+          }
 
           return {
             ...result,
@@ -99,7 +107,6 @@ export function useLotteryResults(params: ResultQueryParams = {}) {
         {}
       );
 
-      console.log("Grouped results:", groupedResults);
       return groupedResults;
     },
   });
