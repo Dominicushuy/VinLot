@@ -27,16 +27,17 @@ export function BetTypeRegionRulesEditor({
   );
 
   // Ensure we have both regions in the value object
-  if (!value.M1) {
-    value.M1 = {
+  const currentValue = { ...value };
+  if (!currentValue.M1) {
+    currentValue.M1 = {
       betMultipliers: {},
       combinationCount: {},
       winningRules: {},
     };
   }
 
-  if (!value.M2) {
-    value.M2 = {
+  if (!currentValue.M2) {
+    currentValue.M2 = {
       betMultipliers: {},
       combinationCount: {},
       winningRules: {},
@@ -46,12 +47,12 @@ export function BetTypeRegionRulesEditor({
   const handleChangeMultiplier = (
     region: string,
     variantId: string,
-    value: string
+    newValue: string
   ) => {
-    const numValue = parseFloat(value);
+    const numValue = parseFloat(newValue);
     if (isNaN(numValue)) return;
 
-    const newRules = { ...onChange };
+    const newRules = { ...currentValue };
     if (!newRules[region]) {
       newRules[region] = {
         betMultipliers: {},
@@ -74,12 +75,12 @@ export function BetTypeRegionRulesEditor({
   const handleChangeCombinationCount = (
     region: string,
     variantId: string,
-    value: string
+    newValue: string
   ) => {
-    const numValue = parseInt(value, 10);
+    const numValue = parseInt(newValue, 10);
     if (isNaN(numValue)) return;
 
-    const newRules = { ...onChange };
+    const newRules = { ...currentValue };
     if (!newRules[region]) {
       newRules[region] = {
         betMultipliers: {},
@@ -102,9 +103,9 @@ export function BetTypeRegionRulesEditor({
   const handleChangeWinningRule = (
     region: string,
     key: string,
-    value: string
+    newValue: string
   ) => {
-    const newRules = { ...onChange };
+    const newRules = { ...currentValue };
     if (!newRules[region]) {
       newRules[region] = {
         betMultipliers: {},
@@ -118,15 +119,15 @@ export function BetTypeRegionRulesEditor({
       newRules[region].winningRules = {};
     }
 
-    newRules[region].winningRules[key] = value;
+    newRules[region].winningRules[key] = newValue;
     onChange(newRules);
   };
 
-  const handleSetSingleMultiplier = (region: string, value: string) => {
-    const numValue = parseFloat(value);
+  const handleSetSingleMultiplier = (region: string, newValue: string) => {
+    const numValue = parseFloat(newValue);
     if (isNaN(numValue)) return;
 
-    const newRules = { ...onChange };
+    const newRules = { ...currentValue };
     if (!newRules[region]) {
       newRules[region] = {
         betMultipliers: numValue,
@@ -152,7 +153,7 @@ export function BetTypeRegionRulesEditor({
 
     // Otherwise, try to extract from multipliers
     const result = [];
-    const region = value[activeRegion];
+    const region = currentValue[activeRegion];
 
     if (region && typeof region.betMultipliers === "object") {
       Object.keys(region.betMultipliers).forEach((key) => {
@@ -199,8 +200,9 @@ export function BetTypeRegionRulesEditor({
                         type="number"
                         step="0.1"
                         value={
-                          typeof value[region]?.betMultipliers === "number"
-                            ? value[region].betMultipliers
+                          typeof currentValue[region]?.betMultipliers ===
+                          "number"
+                            ? currentValue[region].betMultipliers
                             : ""
                         }
                         onChange={(e) =>
@@ -212,7 +214,7 @@ export function BetTypeRegionRulesEditor({
                         type="button"
                         variant="outline"
                         onClick={() => {
-                          const newRules = { ...value };
+                          const newRules = { ...currentValue };
                           if (newRules[region]) {
                             newRules[region].betMultipliers = {};
                             newRules[region].combinationCount = {};
@@ -231,11 +233,11 @@ export function BetTypeRegionRulesEditor({
 
                   <div className="space-y-2">
                     <Label>Quy tắc thắng chung</Label>
-                    {typeof value[region]?.winningRules === "string" ? (
+                    {typeof currentValue[region]?.winningRules === "string" ? (
                       <Textarea
-                        value={value[region]?.winningRules || ""}
+                        value={currentValue[region]?.winningRules || ""}
                         onChange={(e) => {
-                          const newRules = { ...value };
+                          const newRules = { ...currentValue };
                           if (!newRules[region]) {
                             newRules[region] = {
                               betMultipliers: 1,
@@ -256,7 +258,7 @@ export function BetTypeRegionRulesEditor({
                           type="button"
                           variant="outline"
                           onClick={() => {
-                            const newRules = { ...value };
+                            const newRules = { ...currentValue };
                             if (newRules[region]) {
                               newRules[region].winningRules =
                                 "Số cược khớp với giải";
@@ -272,7 +274,7 @@ export function BetTypeRegionRulesEditor({
                 </div>
 
                 {/* Chi tiết hệ số nhân và quy tắc theo biến thể */}
-                {typeof value[region]?.betMultipliers === "object" && (
+                {typeof currentValue[region]?.betMultipliers === "object" && (
                   <div className="border rounded-lg p-4">
                     <h3 className="font-medium mb-4">
                       Chi tiết hệ số theo biến thể
@@ -297,8 +299,9 @@ export function BetTypeRegionRulesEditor({
                               type="number"
                               step="0.1"
                               value={
-                                value[region]?.betMultipliers?.[variant.id] ||
-                                ""
+                                currentValue[region]?.betMultipliers?.[
+                                  variant.id
+                                ] || ""
                               }
                               onChange={(e) =>
                                 handleChangeMultiplier(
@@ -320,8 +323,9 @@ export function BetTypeRegionRulesEditor({
                               id={`combination-${region}-${variant.id}`}
                               type="number"
                               value={
-                                value[region]?.combinationCount?.[variant.id] ||
-                                ""
+                                currentValue[region]?.combinationCount?.[
+                                  variant.id
+                                ] || ""
                               }
                               onChange={(e) =>
                                 handleChangeCombinationCount(
@@ -340,7 +344,7 @@ export function BetTypeRegionRulesEditor({
                 )}
 
                 {/* Chi tiết quy tắc thắng */}
-                {typeof value[region]?.winningRules === "object" && (
+                {typeof currentValue[region]?.winningRules === "object" && (
                   <div className="border rounded-lg p-4">
                     <h3 className="font-medium mb-4">Chi tiết quy tắc thắng</h3>
 
@@ -352,7 +356,9 @@ export function BetTypeRegionRulesEditor({
                           </Label>
                           <Textarea
                             id={`rule-dau-${region}`}
-                            value={value[region]?.winningRules?.dau || ""}
+                            value={
+                              currentValue[region]?.winningRules?.dau || ""
+                            }
                             onChange={(e) =>
                               handleChangeWinningRule(
                                 region,
@@ -371,7 +377,9 @@ export function BetTypeRegionRulesEditor({
                           </Label>
                           <Textarea
                             id={`rule-duoi-${region}`}
-                            value={value[region]?.winningRules?.duoi || ""}
+                            value={
+                              currentValue[region]?.winningRules?.duoi || ""
+                            }
                             onChange={(e) =>
                               handleChangeWinningRule(
                                 region,
@@ -415,8 +423,8 @@ export function BetTypeRegionRulesEditor({
                       </div>
 
                       {/* Hiển thị các quy tắc tùy chỉnh khác */}
-                      {value[region]?.winningRules &&
-                        Object.keys(value[region].winningRules)
+                      {currentValue[region]?.winningRules &&
+                        Object.keys(currentValue[region].winningRules)
                           .filter((key) => key !== "dau" && key !== "duoi")
                           .map((key) => (
                             <div key={key} className="space-y-2">
@@ -429,7 +437,7 @@ export function BetTypeRegionRulesEditor({
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => {
-                                    const newRules = { ...value };
+                                    const newRules = { ...currentValue };
                                     if (newRules[region]?.winningRules) {
                                       delete newRules[region].winningRules[key];
                                       onChange(newRules);
@@ -441,7 +449,10 @@ export function BetTypeRegionRulesEditor({
                               </div>
                               <Textarea
                                 id={`rule-${key}-${region}`}
-                                value={value[region]?.winningRules?.[key] || ""}
+                                value={
+                                  currentValue[region]?.winningRules?.[key] ||
+                                  ""
+                                }
                                 onChange={(e) =>
                                   handleChangeWinningRule(
                                     region,

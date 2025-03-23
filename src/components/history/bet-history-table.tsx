@@ -14,14 +14,44 @@ import {
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
+// Định nghĩa interface cho Bet
+interface Bet {
+  id: string;
+  bet_date: string;
+  draw_date: string;
+  bet_type: string;
+  bet_variant?: string;
+  province_id: string;
+  province?: {
+    name: string;
+  };
+  numbers: string[];
+  denomination: number;
+  total_amount: number;
+  win_amount?: number;
+  status: "pending" | "won" | "lost";
+}
+
+// Định nghĩa interface cho props của component
+interface BetHistoryTableProps {
+  bets: Bet[] | undefined;
+  isLoading: boolean;
+}
+
 // Map các trạng thái sang Việt ngữ và màu sắc
-const statusMap = {
+const statusMap: Record<
+  string,
+  {
+    text: string;
+    variant: "outline" | "lottery" | "destructive" | "default" | "secondary";
+  }
+> = {
   pending: { text: "Đang chờ", variant: "outline" },
   won: { text: "Đã thắng", variant: "lottery" },
   lost: { text: "Đã thua", variant: "destructive" },
 };
 
-export function BetHistoryTable({ bets, isLoading }) {
+export function BetHistoryTable({ bets, isLoading }: BetHistoryTableProps) {
   if (isLoading) {
     return (
       <div className="h-80 flex items-center justify-center">

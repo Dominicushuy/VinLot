@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase/client";
 import { betFormSchema } from "@/lib/validators/bet-form-validator";
 import { calculateBetAmount, calculatePotentialWinAmount } from "@/lib/utils";
+import { LotteryData } from "@/types";
 
 export async function POST(request: Request) {
   try {
@@ -78,8 +79,8 @@ export async function POST(request: Request) {
         ? JSON.parse(betTypeData.variants)
         : betTypeData.variants;
 
-    // Tạo cấu trúc dữ liệu cho utils functions
-    const lotteryData = {
+    // Tạo cấu trúc dữ liệu cho utils functions, bao gồm cả numberSelectionMethods
+    const lotteryData: LotteryData = {
       betTypes: [
         {
           id: betType,
@@ -99,6 +100,8 @@ export async function POST(request: Request) {
           winningRatio: winningRatio,
         },
       ],
+      // Thêm thuộc tính numberSelectionMethods theo yêu cầu của interface LotteryData
+      numberSelectionMethods: [],
     };
 
     // Tính tổng tiền đặt và tiềm năng thắng

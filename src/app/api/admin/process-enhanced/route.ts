@@ -3,6 +3,61 @@ import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase/client";
 import { checkBetResultEnhanced } from "@/lib/utils/improved-bet-result-processor";
 
+// Định nghĩa interface cho kết quả xổ số
+interface LotteryResult {
+  id: string;
+  province_id: string;
+  date: string;
+  day_of_week: string;
+  special_prize: string[];
+  first_prize: string[];
+  second_prize: string[];
+  third_prize: string[];
+  fourth_prize: string[];
+  fifth_prize: string[];
+  sixth_prize: string[];
+  seventh_prize: string[];
+  eighth_prize?: string[];
+  [key: string]: any; // Cho phép các trường khác
+}
+
+// Định nghĩa kiểu dữ liệu cho ResultsMap
+type ResultsMap = Record<string, Record<string, LotteryResult>>;
+
+// Interface cho kết quả xử lý cược
+interface ProcessedBet {
+  id: string;
+  status: string;
+  win_amount: number;
+}
+
+interface WonBet {
+  id: string;
+  win_amount: number;
+  details?: any;
+}
+
+interface LostBet {
+  id: string;
+  details?: any;
+}
+
+interface ErrorBet {
+  id: string;
+  error: string;
+  details: any;
+}
+
+// Interface cho giao dịch
+interface Transaction {
+  user_id: string;
+  bet_id: string;
+  amount: number;
+  type: string;
+  status: string;
+  description: string;
+}
+
 export async function POST() {
   try {
     console.log("Starting enhanced process-all-pending");
@@ -52,7 +107,9 @@ export async function POST() {
     // 4. Lấy toàn bộ kết quả xổ số cần thiết
     console.log(`Lấy kết quả xổ số cho các ngày: ${drawDates.join(", ")}`);
 
-    const resultsMap = {};
+    // Khởi tạo resultsMap với kiểu dữ liệu rõ ràng
+    const resultsMap: ResultsMap = {};
+
     for (const date of drawDates) {
       for (const provinceId of provinceIds) {
         const { data: results } = await supabase
@@ -63,7 +120,7 @@ export async function POST() {
 
         if (results && results.length > 0) {
           if (!resultsMap[date]) resultsMap[date] = {};
-          resultsMap[date][provinceId] = results[0];
+          resultsMap[date][provinceId] = results[0] as LotteryResult;
         }
       }
     }
@@ -106,7 +163,7 @@ export async function POST() {
     }
 
     // Tạo map để tìm kiếm nhanh
-    const betTypeMap = {};
+    const betTypeMap: Record<string, any> = {};
     betTypes.forEach((bt) => {
       betTypeMap[bt.bet_type_id] = bt;
     });
@@ -114,10 +171,10 @@ export async function POST() {
     // 6. Đối soát từng cược
     console.log(`Bắt đầu đối soát ${pendingBets.length} cược...`);
 
-    const processedBets = [];
-    const wonBets = [];
-    const lostBets = [];
-    const errorBets = [];
+    const processedBets: ProcessedBet[] = [];
+    const wonBets: WonBet[] = [];
+    const lostBets: LostBet[] = [];
+    const errorBets: ErrorBet[] = [];
 
     for (const bet of pendingBets) {
       console.log(
@@ -190,7 +247,7 @@ export async function POST() {
             details: betResult.details,
           });
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error(
           `Lỗi không xác định khi đối soát cược ID ${bet.id}:`,
           error
@@ -232,7 +289,7 @@ export async function POST() {
     // 8. Tạo giao dịch cho các cược thắng
     console.log(`Tạo giao dịch cho ${wonBets.length} cược thắng...`);
 
-    const transactions = [];
+    const transactions: Transaction[] = [];
     for (const bet of wonBets) {
       const originalBet = pendingBets.find((b) => b.id === bet.id);
 

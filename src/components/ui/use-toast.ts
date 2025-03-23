@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 type ToastProps = {
   title?: string;
   description?: string;
-  variant?: "default" | "destructive";
+  variant?: "default" | "destructive" | "lottery" | "secondary" | "outline";
   duration?: number;
 };
 

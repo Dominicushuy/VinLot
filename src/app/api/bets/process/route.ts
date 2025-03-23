@@ -3,6 +3,35 @@ import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase/client";
 import { checkBetResult } from "@/lib/utils/bet-result-processor";
 
+// Định nghĩa interface cho User
+interface User {
+  id: string;
+  balance: number;
+  [key: string]: any; // Cho phép các trường khác nếu cần
+}
+
+// Định nghĩa interface cho cược
+interface Bet {
+  id: string;
+  user_id: string;
+  draw_date: string;
+  province_id: string;
+  bet_type: string;
+  bet_variant?: string;
+  status: string;
+  [key: string]: any; // Cho phép các trường khác nếu cần
+}
+
+// Định nghĩa interface cho giao dịch
+interface Transaction {
+  user_id: string;
+  bet_id: string;
+  amount: number;
+  type: string;
+  status: string;
+  description: string;
+}
+
 export async function POST(request: Request) {
   try {
     const { date } = await request.json();
@@ -55,10 +84,14 @@ export async function POST(request: Request) {
     }
 
     // 4. Đối soát từng cược
-    const processedBets = [];
-    const transactions = [];
+    const processedBets: Array<{
+      id: string;
+      status: string;
+      win_amount: number;
+    }> = [];
+    const transactions: Transaction[] = [];
 
-    for (const bet of pendingBets) {
+    for (const bet of pendingBets as Bet[]) {
       // Kiểm tra nếu có kết quả xổ số cho tỉnh của cược
       const provinceResults = results.filter(
         (r) => r.province_id === bet.province_id
@@ -69,7 +102,7 @@ export async function POST(request: Request) {
       }
 
       // Tìm loại cược
-      const betType = betTypes.find((bt) => bt.bet_type_id === bet.bet_type);
+      const betType = betTypes?.find((bt) => bt.bet_type_id === bet.bet_type);
       if (!betType) continue;
 
       // Đối soát kết quả
@@ -114,18 +147,29 @@ export async function POST(request: Request) {
 
       // 7. Cập nhật số dư người dùng
       for (const transaction of transactions) {
-        const { data: user } = await supabase
+        const { data: userData, error: userError } = await supabase
           .from("users")
           .select("balance")
           .eq("id", transaction.user_id)
           .single();
 
-        await supabase
-          .from("users")
-          .update({
-            balance: user.balance + transaction.amount,
-          })
-          .eq("id", transaction.user_id);
+        // Kiểm tra xem user có tồn tại không trước khi truy cập properties
+        if (userError) {
+          console.error(`Error fetching user: ${userError.message}`);
+          continue;
+        }
+
+        // Chắc chắn rằng userData không null
+        if (userData) {
+          const user = userData as User;
+
+          await supabase
+            .from("users")
+            .update({
+              balance: user.balance + transaction.amount,
+            })
+            .eq("id", transaction.user_id);
+        }
       }
     }
 

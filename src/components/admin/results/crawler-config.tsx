@@ -23,6 +23,10 @@ import {
   useSaveCrawlerConfig,
 } from "@/lib/hooks/use-crawler";
 
+// Định nghĩa enum để sử dụng ở nhiều nơi
+const RegionEnum = z.enum(["mien-bac", "mien-trung", "mien-nam"]);
+type RegionType = z.infer<typeof RegionEnum>;
+
 // Schema validation cho cấu hình crawler
 const crawlerConfigSchema = z.object({
   enabled: z.boolean().default(true),
@@ -30,9 +34,7 @@ const crawlerConfigSchema = z.object({
     hour: z.number().min(0).max(23),
     minute: z.number().min(0).max(59),
   }),
-  regions: z
-    .array(z.enum(["mien-bac", "mien-trung", "mien-nam"]))
-    .min(1, "Vui lòng chọn ít nhất 1 miền"),
+  regions: z.array(RegionEnum).min(1, "Vui lòng chọn ít nhất 1 miền"),
   retryCount: z.number().min(1).max(10),
   delayBetweenRequests: z.number().min(500).max(10000),
 });
@@ -42,7 +44,7 @@ type CrawlerConfigFormValues = z.infer<typeof crawlerConfigSchema>;
 export function CrawlerConfig() {
   const { data: config, isLoading } = useCrawlerConfig();
   const saveConfig = useSaveCrawlerConfig();
-  const [regions, setRegions] = useState<string[]>([
+  const [regions, setRegions] = useState<RegionType[]>([
     "mien-bac",
     "mien-trung",
     "mien-nam",
@@ -62,29 +64,35 @@ export function CrawlerConfig() {
     },
   });
 
-  // Cập nhật form khi có dữ liệu config - Mover esto a useEffect
+  // Cập nhật form khi có dữ liệu config
   useEffect(() => {
     if (config && !isLoading) {
+      // Validate regions để đảm bảo chỉ chấp nhận các giá trị hợp lệ
+      const validRegions = config.regions.filter(
+        (region): region is RegionType =>
+          ["mien-bac", "mien-trung", "mien-nam"].includes(region)
+      );
+
       form.reset({
         enabled: config.enabled,
         schedule: config.schedule,
-        regions: config.regions,
+        regions: validRegions,
         retryCount: config.retryCount,
         delayBetweenRequests: config.delayBetweenRequests,
       });
-      setRegions(config.regions);
+      setRegions(validRegions);
     }
   }, [config, isLoading, form]);
 
-  const toggleRegion = (region: string) => {
+  const toggleRegion = (region: RegionType) => {
     if (regions.includes(region)) {
       const newRegions = regions.filter((r) => r !== region);
       setRegions(newRegions);
-      form.setValue("regions", newRegions as any);
+      form.setValue("regions", newRegions);
     } else {
       const newRegions = [...regions, region];
       setRegions(newRegions);
-      form.setValue("regions", newRegions as any);
+      form.setValue("regions", newRegions);
     }
   };
 
@@ -165,7 +173,7 @@ export function CrawlerConfig() {
                       <SelectValue placeholder="Phút" />
                     </SelectTrigger>
                     <SelectContent>
-                      {Array.from({ length: 60, step: 5 }, (_, i) => i).map(
+                      {Array.from({ length: 12 }, (_, i) => i * 5).map(
                         (minute) => (
                           <SelectItem key={minute} value={minute.toString()}>
                             {minute.toString().padStart(2, "0")}

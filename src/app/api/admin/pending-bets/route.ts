@@ -2,6 +2,31 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase/client";
 
+// Định nghĩa interface cho đối tượng Province
+interface Province {
+  province_id: string;
+  name: string;
+}
+
+// Định nghĩa interface cho đối tượng BetType
+interface BetType {
+  bet_type_id: string;
+  name: string;
+}
+
+// Định nghĩa interface cho đối tượng Bet được trả về
+interface TransformedBet {
+  id: string;
+  bet_date: string;
+  draw_date: string;
+  province_id: string;
+  province_name: string;
+  bet_type: string;
+  bet_type_name: string;
+  numbers: string[];
+  total_amount: number;
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -49,7 +74,7 @@ export async function GET(request: Request) {
     const provinceIds = [...new Set(bets.map((bet) => bet.province_id))];
 
     // Trường hợp không có provinceIds nào, tránh lỗi IN với mảng rỗng
-    let provinces = [];
+    let provinces: Province[] = [];
     if (provinceIds.length > 0) {
       const { data: provincesData } = await supabase
         .from("provinces")
@@ -60,7 +85,7 @@ export async function GET(request: Request) {
     }
 
     // Tạo map để dễ dàng lookup
-    const provinceMap = {};
+    const provinceMap: Record<string, string> = {};
     if (provinces.length > 0) {
       provinces.forEach((province) => {
         provinceMap[province.province_id] = province.name;
@@ -71,7 +96,7 @@ export async function GET(request: Request) {
     const betTypeIds = [...new Set(bets.map((bet) => bet.bet_type))];
 
     // Trường hợp không có betTypeIds nào, tránh lỗi IN với mảng rỗng
-    let betTypes = [];
+    let betTypes: BetType[] = [];
     if (betTypeIds.length > 0) {
       const { data: betTypesData } = await supabase
         .from("rules")
@@ -82,7 +107,7 @@ export async function GET(request: Request) {
     }
 
     // Tạo map để dễ dàng lookup
-    const betTypeMap = {};
+    const betTypeMap: Record<string, string> = {};
     if (betTypes.length > 0) {
       betTypes.forEach((type) => {
         betTypeMap[type.bet_type_id] = type.name;
@@ -90,7 +115,7 @@ export async function GET(request: Request) {
     }
 
     // 4. Kết hợp dữ liệu
-    const transformedBets = bets.map((bet) => ({
+    const transformedBets: TransformedBet[] = bets.map((bet) => ({
       id: bet.id,
       bet_date: bet.bet_date,
       draw_date: bet.draw_date,

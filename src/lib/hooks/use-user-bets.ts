@@ -11,6 +11,12 @@ export interface UserBetsParams {
   provinceId?: string;
 }
 
+// Define interface for Province data
+interface Province {
+  province_id: string;
+  name: string;
+}
+
 export function useUserBets(params: UserBetsParams) {
   const { userId, status, startDate, endDate, betType, provinceId } = params;
 
@@ -59,9 +65,9 @@ export function useUserBets(params: UserBetsParams) {
           .in("province_id", provinceIds);
 
         // Crie um mapa de provinceId -> nome para lookup rápido
-        const provinceMap = {};
+        const provinceMap: Record<string, string> = {};
         if (provinces) {
-          provinces.forEach((province) => {
+          provinces.forEach((province: Province) => {
             provinceMap[province.province_id] = province.name;
           });
         }

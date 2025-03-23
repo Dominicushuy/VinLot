@@ -3,7 +3,43 @@ import { formatCurrency } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export function BetDetail({ bet, province, betType, results }) {
+// Define interfaces for props
+interface Bet {
+  id: string;
+  status: "pending" | "won" | "lost";
+  numbers: string[];
+  total_amount: number;
+  win_amount?: number;
+  // Thêm các field khác nếu cần
+}
+
+interface Province {
+  name: string;
+  province_id?: string;
+  // Thêm các field khác nếu cần
+}
+
+interface BetType {
+  name: string;
+  bet_type_id?: string;
+  // Thêm các field khác nếu cần
+}
+
+interface Result {
+  id: string;
+  draw_date: string;
+  numbers: string[];
+  // Thêm các field khác nếu cần
+}
+
+interface BetDetailProps {
+  bet: Bet;
+  province: Province | null;
+  betType: BetType | null;
+  results: Result | null;
+}
+
+export function BetDetail({ bet, results }: BetDetailProps) {
   // Nếu chưa có kết quả, hiển thị đang chờ
   if (!results && bet.status === "pending") {
     return (
@@ -79,7 +115,7 @@ export function BetDetail({ bet, province, betType, results }) {
                 Chúc mừng! Bạn đã thắng
               </h3>
               <p className="text-2xl font-bold text-green-600 mt-2">
-                {formatCurrency(bet.win_amount)}
+                {formatCurrency(bet.win_amount || 0)}
               </p>
             </div>
 
@@ -93,13 +129,13 @@ export function BetDetail({ bet, province, betType, results }) {
                 <div className="flex justify-between">
                   <span className="text-gray-600">Số tiền thắng:</span>
                   <span className="font-medium">
-                    {formatCurrency(bet.win_amount)}
+                    {formatCurrency(bet.win_amount || 0)}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Lợi nhuận:</span>
                   <span className="font-medium text-green-600">
-                    {formatCurrency(bet.win_amount - bet.total_amount)}
+                    {formatCurrency((bet.win_amount || 0) - bet.total_amount)}
                   </span>
                 </div>
               </div>

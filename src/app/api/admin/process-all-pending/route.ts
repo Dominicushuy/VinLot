@@ -3,6 +3,54 @@ import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase/client";
 import { checkBetResult } from "@/lib/utils/bet-result-processor";
 
+// Định nghĩa interface cho kết quả xổ số
+interface LotteryResult {
+  id: string;
+  province_id: string;
+  date: string;
+  day_of_week: string;
+  special_prize: string[];
+  first_prize: string[];
+  second_prize: string[];
+  third_prize: string[];
+  fourth_prize: string[];
+  fifth_prize: string[];
+  sixth_prize: string[];
+  seventh_prize: string[];
+  eighth_prize?: string[];
+  [key: string]: any; // Cho phép các trường khác nếu cần
+}
+
+// Định nghĩa interface cho cược
+interface Bet {
+  id: string;
+  user_id: string;
+  bet_date: string;
+  draw_date: string;
+  region_type: "M1" | "M2";
+  province_id: string;
+  bet_type: string;
+  bet_variant?: string;
+  numbers: string[];
+  selection_method: string;
+  denomination: number;
+  total_amount: number;
+  potential_win_amount: number;
+  status: "pending" | "won" | "lost";
+  win_amount?: number;
+  [key: string]: any; // Cho phép các trường khác nếu cần
+}
+
+// Định nghĩa interface cho giao dịch
+interface Transaction {
+  user_id: string;
+  bet_id: string;
+  amount: number;
+  type: string;
+  status: string;
+  description: string;
+}
+
 export async function POST() {
   try {
     console.log("Starting process-all-pending");
@@ -39,7 +87,7 @@ export async function POST() {
     const drawDates = [...new Set(pendingBets.map((bet) => bet.draw_date))];
     console.log("Ngày cần lấy kết quả:", drawDates);
 
-    let allResults = [];
+    let allResults: LotteryResult[] = [];
     for (const date of drawDates) {
       const { data: results, error: resultsError } = await supabase
         .from("results")
@@ -52,7 +100,7 @@ export async function POST() {
       }
 
       if (results && results.length > 0) {
-        allResults = [...allResults, ...results];
+        allResults = [...allResults, ...(results as LotteryResult[])];
       }
     }
 
@@ -91,10 +139,14 @@ export async function POST() {
     }
 
     // 4. Đối soát từng cược
-    const processedBets = [];
-    const transactions = [];
+    const processedBets: Array<{
+      id: string;
+      status: "won" | "lost";
+      win_amount: number;
+    }> = [];
+    const transactions: Transaction[] = [];
 
-    for (const bet of pendingBets) {
+    for (const bet of pendingBets as Bet[]) {
       console.log(
         `Processing bet ID: ${bet.id}, type: ${bet.bet_type}, province: ${bet.province_id}, draw date: ${bet.draw_date}`
       );
@@ -168,7 +220,7 @@ export async function POST() {
             description: `Thắng cược ${bet.bet_type} ngày ${bet.draw_date}`,
           });
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error(`Error processing bet ${bet.id}:`, error);
         // Continue with other bets even if one fails
       }

@@ -28,11 +28,11 @@ export function BetTypesImportExport({ onImport }: BetTypesImportExportProps) {
   const { data: betTypes, isLoading } = useBetTypes();
 
   // Format for export (remove unnecessary fields)
-  const formatForExport = (data: any[]) => {
+  const formatForExport = (data: any[] | undefined): any[] => {
     if (!data) return [];
 
     return data.map((item) => {
-      const { id, created_at, updated_at, ...rest } = item;
+      const { ...rest } = item;
       return rest;
     });
   };

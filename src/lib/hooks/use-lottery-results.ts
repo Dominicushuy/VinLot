@@ -11,7 +11,7 @@ export function useLotteryResults(params: ResultQueryParams = {}) {
   const { region, provinceId, date } = params;
 
   return useQuery({
-    queryKey: ["lottery-results", { region, provinceId, date }], // Thêm date vào queryKey
+    queryKey: ["lottery-results", { region, provinceId, date }],
     queryFn: async () => {
       // Bước 1: Lấy tất cả các tỉnh
       const { data: provinces, error: provincesError } = await getTables()
@@ -74,8 +74,8 @@ export function useLotteryResults(params: ResultQueryParams = {}) {
             return null;
           }
 
-          // Nếu có filter region khác "all" và tỉnh không thuộc region đó, bỏ qua
-          if (region && region !== "all" && province.region !== region) {
+          // Nếu có filter region và tỉnh không thuộc region đó, bỏ qua
+          if (region && province.region !== region) {
             return null;
           }
 

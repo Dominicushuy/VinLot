@@ -23,16 +23,60 @@ import {
   SearchIcon,
   ArrowRightCircle,
 } from "lucide-react";
-import { format } from "date-fns";
-import { vi } from "date-fns/locale";
 import { useToast } from "@/components/ui/use-toast";
+
+// Define interfaces for the diagnostics data structure
+interface DiagnosticIssue {
+  type: string;
+  context: string;
+  detail: string | Record<string, any>;
+}
+
+interface DiagnosticData {
+  total_pending?: number;
+  samples_examined?: number;
+  draw_dates?: string[];
+  provinces?: string[];
+  bet_types?: string[];
+  results_available?: number;
+  bet_details?: any[];
+  issues?: DiagnosticIssue[];
+}
+
+interface DiagnosticResult {
+  status: string;
+  diagnostics?: DiagnosticData;
+  suggestions?: string[];
+}
+
+interface ProcessError {
+  id: string;
+  error: string;
+  details?: string | Record<string, any>;
+}
+
+interface ProcessResult {
+  success: boolean;
+  processed: number;
+  won: number;
+  lost: number;
+  errors?: number;
+  updated?: number;
+  total_pending?: number;
+  processing_time_ms?: number;
+  error_details?: ProcessError[];
+  message?: string;
+}
 
 export function DiagnosticPanel() {
   const { toast } = useToast();
   const [isRunningDiagnostics, setIsRunningDiagnostics] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [diagnosticResult, setDiagnosticResult] = useState<any>(null);
-  const [processResult, setProcessResult] = useState<any>(null);
+  const [diagnosticResult, setDiagnosticResult] =
+    useState<DiagnosticResult | null>(null);
+  const [processResult, setProcessResult] = useState<ProcessResult | null>(
+    null
+  );
   const [activeTab, setActiveTab] = useState<string>("diagnostics");
 
   // Chạy chẩn đoán để phát hiện vấn đề
@@ -101,16 +145,6 @@ export function DiagnosticPanel() {
     }
   };
 
-  // Format thời gian timestamp
-  const formatDateTime = (timestamp: string) => {
-    try {
-      const date = new Date(timestamp);
-      return format(date, "HH:mm:ss dd/MM/yyyy", { locale: vi });
-    } catch (error) {
-      return timestamp;
-    }
-  };
-
   return (
     <Card className="w-full">
       <CardHeader>
@@ -164,8 +198,8 @@ export function DiagnosticPanel() {
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Chưa có kết quả chẩn đoán</AlertTitle>
                 <AlertDescription>
-                  Nhấn "Chạy chẩn đoán" để phân tích các vấn đề trong quá trình
-                  đối soát
+                  Nhấn &quot;Chạy chẩn đoán&quot; để phân tích các vấn đề trong
+                  quá trình đối soát
                 </AlertDescription>
               </Alert>
             )}
@@ -220,40 +254,47 @@ export function DiagnosticPanel() {
                   </Card>
                 </div>
 
-                {diagnosticResult.diagnostics?.issues?.length > 0 && (
-                  <div className="space-y-3">
-                    <h4 className="font-medium">Các vấn đề đã phát hiện:</h4>
-                    {diagnosticResult.diagnostics.issues.map((issue, index) => (
-                      <Alert
-                        key={index}
-                        variant={
-                          issue.type.includes("error")
-                            ? "destructive"
-                            : "default"
-                        }
-                      >
-                        <AlertTriangle className="h-4 w-4" />
-                        <AlertTitle>{issue.context}</AlertTitle>
-                        <AlertDescription className="text-sm">
-                          {typeof issue.detail === "string"
-                            ? issue.detail
-                            : JSON.stringify(issue.detail)}
-                        </AlertDescription>
-                      </Alert>
-                    ))}
-                  </div>
-                )}
+                {diagnosticResult.diagnostics &&
+                  diagnosticResult.diagnostics.issues &&
+                  diagnosticResult.diagnostics.issues.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="font-medium">Các vấn đề đã phát hiện:</h4>
+                      {diagnosticResult.diagnostics.issues.map(
+                        (issue: DiagnosticIssue, index: number) => (
+                          <Alert
+                            key={index}
+                            variant={
+                              issue.type.includes("error")
+                                ? "destructive"
+                                : "default"
+                            }
+                          >
+                            <AlertTriangle className="h-4 w-4" />
+                            <AlertTitle>{issue.context}</AlertTitle>
+                            <AlertDescription className="text-sm">
+                              {typeof issue.detail === "string"
+                                ? issue.detail
+                                : JSON.stringify(issue.detail)}
+                            </AlertDescription>
+                          </Alert>
+                        )
+                      )}
+                    </div>
+                  )}
 
-                {diagnosticResult.suggestions?.length > 0 && (
-                  <div className="mt-6 space-y-2">
-                    <h4 className="font-medium">Đề xuất giải pháp:</h4>
-                    <ul className="list-disc list-inside space-y-1 text-sm">
-                      {diagnosticResult.suggestions.map((suggestion, index) => (
-                        <li key={index}>{suggestion}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                {diagnosticResult.suggestions &&
+                  diagnosticResult.suggestions.length > 0 && (
+                    <div className="mt-6 space-y-2">
+                      <h4 className="font-medium">Đề xuất giải pháp:</h4>
+                      <ul className="list-disc list-inside space-y-1 text-sm">
+                        {diagnosticResult.suggestions.map(
+                          (suggestion: string, index: number) => (
+                            <li key={index}>{suggestion}</li>
+                          )
+                        )}
+                      </ul>
+                    </div>
+                  )}
 
                 <div className="flex justify-end mt-4">
                   <Button onClick={() => setActiveTab("process")}>
@@ -444,29 +485,31 @@ export function DiagnosticPanel() {
                           xử lý
                         </p>
                         <div className="max-h-40 overflow-y-auto">
-                          {processResult.error_details.map((error, index) => (
-                            <div
-                              key={index}
-                              className="text-xs border-b pb-1 mb-1 last:border-0"
-                            >
-                              <div className="flex items-center">
-                                <XCircle className="h-3 w-3 mr-1 text-red-500" />
-                                <span className="font-mono mr-1">
-                                  {error.id.slice(0, 8)}...
-                                </span>
-                                <Badge variant="outline" className="ml-auto">
-                                  {error.error}
-                                </Badge>
-                              </div>
-                              {error.details && (
-                                <div className="ml-4 mt-1 text-gray-500">
-                                  {typeof error.details === "string"
-                                    ? error.details
-                                    : JSON.stringify(error.details)}
+                          {processResult.error_details.map(
+                            (error: ProcessError, index: number) => (
+                              <div
+                                key={index}
+                                className="text-xs border-b pb-1 mb-1 last:border-0"
+                              >
+                                <div className="flex items-center">
+                                  <XCircle className="h-3 w-3 mr-1 text-red-500" />
+                                  <span className="font-mono mr-1">
+                                    {error.id.slice(0, 8)}...
+                                  </span>
+                                  <Badge variant="outline" className="ml-auto">
+                                    {error.error}
+                                  </Badge>
                                 </div>
-                              )}
-                            </div>
-                          ))}
+                                {error.details && (
+                                  <div className="ml-4 mt-1 text-gray-500">
+                                    {typeof error.details === "string"
+                                      ? error.details
+                                      : JSON.stringify(error.details)}
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          )}
                         </div>
                       </div>
                     ) : (

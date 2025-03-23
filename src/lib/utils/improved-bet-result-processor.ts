@@ -231,12 +231,13 @@ export function checkBetResultEnhanced(
         matchDetails: [],
       },
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(`Lỗi không xác định khi đối soát cược ID ${bet.id}:`, error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return {
       isWinning: false,
       winAmount: 0,
-      error: `UNEXPECTED_ERROR: ${error.message}`,
+      error: `UNEXPECTED_ERROR: ${errorMessage}`,
     };
   }
 }

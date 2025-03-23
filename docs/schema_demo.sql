@@ -510,8 +510,6 @@ VALUES ('danang', 'Đà Nẵng', 'XSDNG', 'mien-trung', 'M1', ARRAY['thu-tu', 't
 INSERT INTO provinces (province_id, name, code, region, region_type, draw_days)
 VALUES ('khanhhoa', 'Khánh Hòa', 'XSKH', 'mien-trung', 'M1', ARRAY['thu-tu', 'chu-nhat']);
 
--- Còn nhiều tỉnh khác từ miền Trung
-
 -- Miền Nam
 INSERT INTO provinces (province_id, name, code, region, region_type, draw_days)
 VALUES ('tphcm', 'TP. HCM', 'XSHCM', 'mien-nam', 'M1', ARRAY['thu-hai', 'thu-bay']);

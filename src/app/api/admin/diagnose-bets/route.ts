@@ -2,6 +2,38 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase/client";
 
+// Định nghĩa các interface cho issues
+interface BetIssue {
+  type: string;
+  detail: string;
+}
+
+interface DiagnosticIssue {
+  type: string;
+  context: string;
+  detail: any;
+}
+
+interface BetDetailInfo {
+  id: string;
+  draw_date: string;
+  province_id: string;
+  bet_type: string;
+  issues: BetIssue[];
+}
+
+// Định nghĩa interface cho diagnostics
+interface BetDiagnostics {
+  total_pending: number | null;
+  samples_examined: number;
+  draw_dates: string[];
+  provinces: string[];
+  bet_types: string[];
+  results_available: number;
+  bet_details: BetDetailInfo[];
+  issues: DiagnosticIssue[];
+}
+
 export async function GET() {
   try {
     console.log("Starting bet diagnostics");
@@ -37,7 +69,7 @@ export async function GET() {
     );
 
     // 2. Phân tích dữ liệu cược
-    const diagnostics = {
+    const diagnostics: BetDiagnostics = {
       total_pending: count,
       samples_examined: pendingBets.length,
       draw_dates: [],
@@ -60,7 +92,7 @@ export async function GET() {
 
     // 3. Kiểm tra có kết quả xổ số cho các ngày và tỉnh này không
     let resultsFound = 0;
-    const missingResults = [];
+    const missingResults: Array<{ date: string; provinceId: string }> = [];
 
     for (const date of drawDates) {
       for (const provinceId of provinceIds) {
@@ -144,7 +176,7 @@ export async function GET() {
                 detail: "Thiếu cấu trúc M1/M2",
               });
             }
-          } catch (e) {
+          } catch (e: any) {
             diagnostics.issues.push({
               type: "invalid_json",
               context: `Loại cược ${bt.bet_type_id} có JSON không hợp lệ cho region_rules`,
@@ -155,10 +187,10 @@ export async function GET() {
 
         if (bt.winning_ratio) {
           try {
-            typeof bt.winning_ratio === "string"
-              ? JSON.parse(bt.winning_ratio)
-              : bt.winning_ratio;
-          } catch (e) {
+            // const winningRatio = typeof bt.winning_ratio === "string"
+            //   ? JSON.parse(bt.winning_ratio)
+            //   : bt.winning_ratio;
+          } catch (e: any) {
             diagnostics.issues.push({
               type: "invalid_json",
               context: `Loại cược ${bt.bet_type_id} có JSON không hợp lệ cho winning_ratio`,
@@ -169,10 +201,10 @@ export async function GET() {
 
         if (bt.variants) {
           try {
-            typeof bt.variants === "string"
-              ? JSON.parse(bt.variants)
-              : bt.variants;
-          } catch (e) {
+            // const variants = typeof bt.variants === "string"
+            //   ? JSON.parse(bt.variants)
+            //   : bt.variants;
+          } catch (e: any) {
             diagnostics.issues.push({
               type: "invalid_json",
               context: `Loại cược ${bt.bet_type_id} có JSON không hợp lệ cho variants`,
@@ -185,7 +217,7 @@ export async function GET() {
 
     // 5. Chi tiết từng phiếu và vấn đề tiềm ẩn
     for (const bet of pendingBets) {
-      const betDetail = {
+      const betDetail: BetDetailInfo = {
         id: bet.id,
         draw_date: bet.draw_date,
         province_id: bet.province_id,
@@ -228,7 +260,7 @@ export async function GET() {
               detail: `Loại cược ${bet.bet_type} không hỗ trợ miền ${bet.region_type}`,
             });
           }
-        } catch (e) {
+        } catch (e: any) {
           betDetail.issues.push({
             type: "json_parse_error",
             detail: `Không thể parse region_rules cho loại cược ${bet.bet_type}: ${e.message}`,
@@ -253,7 +285,7 @@ export async function GET() {
                 detail: `Biến thể cược ${bet.bet_variant} không hợp lệ cho loại cược ${bet.bet_type}`,
               });
             }
-          } catch (e) {
+          } catch (e: any) {
             betDetail.issues.push({
               type: "json_parse_error",
               detail: `Không thể parse variants cho loại cược ${bet.bet_type}: ${e.message}`,
@@ -267,7 +299,7 @@ export async function GET() {
     }
 
     // 6. Tổng hợp kết quả và đề xuất giải pháp
-    const suggestions = [];
+    const suggestions: string[] = [];
 
     if (diagnostics.issues.some((i) => i.type === "missing_results")) {
       suggestions.push(
