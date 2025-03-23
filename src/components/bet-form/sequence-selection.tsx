@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 export function SequenceSelection() {
   const { methods } = useBetContext();
@@ -56,11 +57,21 @@ export function SequenceSelection() {
       }
       setPreview(numbers);
     } else if (sequenceType === "doubles") {
-      // No input required
+      // No input required for these predefined sequences
       setPreview(["00", "11", "22", "33", "44", "55", "66", "77", "88", "99"]);
     } else if (sequenceType === "progression") {
-      // No input required
       setPreview(["01", "12", "23", "34", "45", "56", "67", "78", "89"]);
+    } else if (sequenceType === "custom") {
+      // Custom sequence - define your own logic here
+      // Ví dụ: Tạo dãy các số có tổng là 9
+      const numbers = [];
+      for (let i = 0; i <= 9; i++) {
+        const j = 9 - i;
+        if (j >= 0 && j <= 9) {
+          numbers.push(`${i}${j}`);
+        }
+      }
+      setPreview(numbers);
     }
   };
 
@@ -81,10 +92,78 @@ export function SequenceSelection() {
     setPreview([]);
   };
 
+  // Get number of already selected numbers from the current preview
+  const selectedPreviewCount = preview.filter((num) =>
+    currentNumbers.includes(num)
+  ).length;
+
+  // Predefined sequences for quick access
+  const predefinedSequences = [
+    {
+      name: "Số đôi",
+      description: "Các số có 2 chữ số giống nhau",
+      values: ["00", "11", "22", "33", "44", "55", "66", "77", "88", "99"],
+    },
+    {
+      name: "Số tiến",
+      description: "Các số có chữ số liên tiếp tăng",
+      values: ["01", "12", "23", "34", "45", "56", "67", "78", "89"],
+    },
+    {
+      name: "Số lùi",
+      description: "Các số có chữ số liên tiếp giảm",
+      values: ["10", "21", "32", "43", "54", "65", "76", "87", "98"],
+    },
+    {
+      name: "Tổng bằng 9",
+      description: "Các số có tổng 2 chữ số bằng 9",
+      values: ["09", "18", "27", "36", "45", "54", "63", "72", "81", "90"],
+    },
+    {
+      name: "Kéo hình chữ X",
+      description: "Các số nằm trên hai đường chéo của bảng số 10x10",
+      values: [
+        "00",
+        "11",
+        "22",
+        "33",
+        "44",
+        "55",
+        "66",
+        "77",
+        "88",
+        "99",
+        "09",
+        "18",
+        "27",
+        "36",
+        "45",
+        "54",
+        "63",
+        "72",
+        "81",
+        "90",
+      ],
+    },
+  ];
+
+  // Add a predefined sequence to the selected numbers
+  const addPredefinedSequence = (values: string[]) => {
+    const newNumbers = [...currentNumbers];
+
+    values.forEach((num) => {
+      if (!newNumbers.includes(num)) {
+        newNumbers.push(num);
+      }
+    });
+
+    methods.setValue("numbers", newNumbers);
+  };
+
   return (
     <div className="space-y-4">
       <div>
-        <p className="text-sm mb-3">Chọn kiểu kéo số</p>
+        <p className="text-sm font-medium mb-2">Chọn kiểu kéo số</p>
         <Select
           value={sequenceType}
           onValueChange={(value) => {
@@ -102,6 +181,7 @@ export function SequenceSelection() {
             <SelectItem value="units">Kéo đơn vị</SelectItem>
             <SelectItem value="doubles">Số đôi</SelectItem>
             <SelectItem value="progression">Số tiến</SelectItem>
+            <SelectItem value="custom">Tổng bằng 9</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -134,7 +214,9 @@ export function SequenceSelection() {
         </div>
       )}
 
-      {(sequenceType === "doubles" || sequenceType === "progression") && (
+      {(sequenceType === "doubles" ||
+        sequenceType === "progression" ||
+        sequenceType === "custom") && (
         <div className="flex justify-end">
           <Button type="button" onClick={generateSequence}>
             Tạo dãy số
@@ -143,26 +225,107 @@ export function SequenceSelection() {
       )}
 
       {preview.length > 0 && (
-        <div className="mt-4 p-4 bg-gray-50 rounded-md">
+        <div className="mt-4 p-4 bg-gray-50 rounded-md border">
           <div className="flex justify-between items-center mb-2">
             <p className="font-medium">Dãy số ({preview.length})</p>
-            <Button type="button" size="sm" onClick={confirmSelection}>
-              Thêm tất cả
-            </Button>
+            <div className="flex gap-2">
+              {selectedPreviewCount > 0 &&
+                selectedPreviewCount < preview.length && (
+                  <Badge variant="outline" className="bg-white text-xs">
+                    {selectedPreviewCount}/{preview.length} đã chọn
+                  </Badge>
+                )}
+              <Button type="button" size="sm" onClick={confirmSelection}>
+                Thêm tất cả
+              </Button>
+            </div>
           </div>
           <div className="flex flex-wrap gap-2">
             {preview.map((number, index) => (
-              <div key={index} className="px-3 py-1 bg-white border rounded-md">
+              <Badge
+                key={index}
+                variant={
+                  currentNumbers.includes(number) ? "lottery" : "outline"
+                }
+                className="cursor-pointer"
+                onClick={() => {
+                  // Toggle this number in the selected numbers
+                  if (currentNumbers.includes(number)) {
+                    methods.setValue(
+                      "numbers",
+                      currentNumbers.filter((n) => n !== number)
+                    );
+                  } else {
+                    methods.setValue("numbers", [...currentNumbers, number]);
+                  }
+                }}
+              >
                 {number}
-              </div>
+              </Badge>
             ))}
           </div>
         </div>
       )}
 
-      <div className="text-sm text-muted-foreground mt-4">
+      <div className="mt-6">
+        <h3 className="text-sm font-medium mb-3">Các dãy số phổ biến</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+          {predefinedSequences.map((sequence, index) => {
+            // Calculate how many numbers in this sequence are already selected
+            const selectedCount = sequence.values.filter((num) =>
+              currentNumbers.includes(num)
+            ).length;
+
+            const isFullySelected = selectedCount === sequence.values.length;
+            const isPartiallySelected = selectedCount > 0 && !isFullySelected;
+
+            return (
+              <Button
+                key={index}
+                type="button"
+                variant={
+                  isFullySelected
+                    ? "lottery"
+                    : isPartiallySelected
+                    ? "lotterySecondary"
+                    : "outline"
+                }
+                className="h-auto py-2 justify-start relative"
+                onClick={() => addPredefinedSequence(sequence.values)}
+              >
+                <div className="text-left">
+                  <div className="font-medium text-sm">{sequence.name}</div>
+                  <div className="text-xs mt-1 opacity-80">
+                    {sequence.description}
+                  </div>
+                </div>
+
+                {isPartiallySelected && (
+                  <Badge
+                    variant="outline"
+                    className="absolute -top-2 -right-2 bg-white text-xs"
+                  >
+                    {selectedCount}/{sequence.values.length}
+                  </Badge>
+                )}
+
+                {isFullySelected && (
+                  <Badge
+                    variant="outline"
+                    className="absolute -top-2 -right-2 bg-white text-green-600 border-green-200 text-xs"
+                  >
+                    {selectedCount}/{sequence.values.length}
+                  </Badge>
+                )}
+              </Button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="text-sm text-muted-foreground mt-6">
         <p>Giải thích kiểu kéo số:</p>
-        <ul className="list-disc list-inside mt-1">
+        <ul className="list-disc list-inside mt-1 text-xs space-y-1">
           <li>
             <b>Kéo chục:</b> Tạo 10 số có cùng hàng chục (Ví dụ: 20, 21, 22,
             ..., 29)
@@ -177,6 +340,9 @@ export function SequenceSelection() {
           <li>
             <b>Số tiến:</b> Các số có 2 chữ số liên tiếp tăng dần (01, 12, ...,
             89)
+          </li>
+          <li>
+            <b>Tổng bằng 9:</b> Các số có tổng 2 chữ số bằng 9 (09, 18, ..., 90)
           </li>
         </ul>
       </div>
