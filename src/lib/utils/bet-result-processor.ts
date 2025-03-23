@@ -149,7 +149,7 @@ function checkXiuChuResult(
   }
 
   // Tính tiền thắng dựa trên số lần khớp
-  let ratio = typeof winningRatio === "number" ? winningRatio : 650; // Mặc định 650
+  const ratio = typeof winningRatio === "number" ? winningRatio : 650; // Mặc định 650
   return matches * bet.denomination * ratio;
 }
 
@@ -295,7 +295,7 @@ function checkNhatToResult(bet: any, result: any, winningRatio: any): number {
     }
   }
 
-  let ratio = typeof winningRatio === "number" ? winningRatio : 75;
+  const ratio = typeof winningRatio === "number" ? winningRatio : 75;
   return matches * bet.denomination * ratio;
 }
 
@@ -348,7 +348,6 @@ function checkXienResult(bet: any, result: any, winningRatio: any): number {
   return bet.denomination * ratio;
 }
 
-// Kiểm tra kết quả cược Đá
 function checkDaResult(bet: any, result: any, winningRatio: any): number {
   // Xác định biến thể Đá (da2, da3, da4, da5)
   const variant = bet.bet_variant || "da2";
@@ -376,6 +375,9 @@ function checkDaResult(bet: any, result: any, winningRatio: any): number {
     }
   }
 
+  console.log(`Đối soát cược Đá ${variant} với ${bet.numbers.length} số`);
+  console.log(`Tìm thấy ${allLastTwoDigits.length} số 2 chữ số từ kết quả`);
+
   // Đếm số lần xuất hiện của mỗi số trong kết quả
   const matchCounts: Record<string, number> = {};
   for (const number of bet.numbers) {
@@ -387,10 +389,14 @@ function checkDaResult(bet: any, result: any, winningRatio: any): number {
     }
   }
 
+  console.log("Match counts:", matchCounts);
+
   // Đếm số lượng số trúng (ít nhất 1 lần)
   const matchedNumbers = Object.keys(matchCounts).filter(
     (num) => matchCounts[num] > 0
   );
+
+  console.log(`Số lượng số trúng: ${matchedNumbers.length}`);
 
   // Nếu không có số nào trúng
   if (matchedNumbers.length === 0) {
@@ -505,6 +511,8 @@ function checkDaResult(bet: any, result: any, winningRatio: any): number {
       break;
   }
 
+  console.log(`Trường hợp trúng: ${winCase}`);
+
   // Nếu không xác định được trường hợp trúng
   if (!winCase) {
     return 0;
@@ -520,5 +528,6 @@ function checkDaResult(bet: any, result: any, winningRatio: any): number {
     }
   }
 
+  console.log(`Tỷ lệ thưởng: ${ratio}`);
   return bet.denomination * ratio;
 }

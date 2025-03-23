@@ -10,11 +10,80 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp, Info } from "lucide-react";
 import { useState } from "react";
 
+// Helper function để lấy tỷ lệ thưởng
+const getWinningRatio = (betTypeData: any, betVariant?: string): string => {
+  if (!betTypeData) return "N/A";
+
+  // Parse winning_ratio nếu là string
+  const winningRatio =
+    typeof betTypeData.winning_ratio === "string"
+      ? JSON.parse(betTypeData.winning_ratio)
+      : betTypeData.winning_ratio;
+
+  // Xác định tỷ lệ dựa trên cấu trúc và biến thể
+  if (betVariant) {
+    // Nếu có biến thể và winning_ratio là object
+    if (typeof winningRatio === "object" && winningRatio !== null) {
+      return winningRatio[betVariant] ? `1:${winningRatio[betVariant]}` : "N/A";
+    } else if (typeof winningRatio === "number") {
+      // Nếu có biến thể nhưng winning_ratio là số (áp dụng cho tất cả biến thể)
+      return `1:${winningRatio}`;
+    }
+  } else {
+    // Nếu không có biến thể
+    if (typeof winningRatio === "number") {
+      return `1:${winningRatio}`;
+    } else if (typeof winningRatio === "object" && winningRatio !== null) {
+      // Nếu là object nhưng không có biến thể, lấy giá trị đầu tiên
+      const firstValue = Object.values(winningRatio)[0];
+      return typeof firstValue === "number" ? `1:${firstValue}` : "N/A";
+    }
+  }
+
+  return "N/A"; // Fallback
+};
+
+// Helper function để lấy hệ số nhân
+const getBetMultiplier = (
+  betTypeData: any,
+  regionType: string,
+  betVariant?: string
+): string => {
+  if (!betTypeData) return "N/A";
+
+  // Parse region_rules nếu là string
+  const regionRules =
+    typeof betTypeData.region_rules === "string"
+      ? JSON.parse(betTypeData.region_rules)
+      : betTypeData.region_rules;
+
+  // Kiểm tra xem region_rules có chứa regionType
+  if (regionRules && regionRules[regionType]) {
+    const betMultipliers = regionRules[regionType].betMultipliers;
+
+    // Nếu có biến thể và betMultipliers là object
+    if (
+      betVariant &&
+      typeof betMultipliers === "object" &&
+      betMultipliers !== null
+    ) {
+      return betMultipliers[betVariant]?.toString() || "N/A";
+    } else if (typeof betMultipliers === "number") {
+      // Nếu betMultipliers là số
+      return betMultipliers.toString();
+    } else if (typeof betMultipliers === "object" && betMultipliers !== null) {
+      // Nếu là object nhưng không có biến thể xác định, lấy giá trị đầu tiên
+      const firstValue = Object.values(betMultipliers)[0];
+      return typeof firstValue === "number" ? firstValue.toString() : "N/A";
+    }
+  }
+
+  return "N/A"; // Fallback
+};
+
 export function BetReview() {
   const { methods, totalAmount, potentialWin, isBalanceEnough } =
     useBetContext();
-
-  //   console.log({ result: useBetContext() });
 
   const [isExpanded, setIsExpanded] = useState(true);
 
@@ -30,6 +99,9 @@ export function BetReview() {
   // Fetch province and bet type data
   const { data: provincesByRegion } = useProvincesByRegion();
   const { data: betTypes } = useBetTypes();
+
+  // Find current bet type data for ratio calculations
+  const currentBetTypeData = betTypes?.find((bt) => bt.bet_type_id === betType);
 
   // Get province names based on IDs
   const getProvinceNames = () => {
@@ -161,6 +233,28 @@ export function BetReview() {
                     <span className="text-gray-600">Mệnh giá:</span>
                     <span>{formatCurrency(denomination)}</span>
                   </div>
+
+                  {/* Thông tin tỷ lệ cược được thêm vào đây */}
+                  {currentBetTypeData && (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Tỷ lệ thưởng:</span>
+                        <span className="text-lottery-primary font-medium">
+                          {getWinningRatio(currentBetTypeData, betVariant)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Hệ số nhân:</span>
+                        <span>
+                          {getBetMultiplier(
+                            currentBetTypeData,
+                            regionType,
+                            betVariant
+                          )}
+                        </span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             )}

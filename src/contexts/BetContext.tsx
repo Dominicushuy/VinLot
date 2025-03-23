@@ -67,7 +67,7 @@ interface Province {
   province_id: string;
   name: string;
   region_type: "M1" | "M2";
-  // Thêm các thuộc tính khác nếu cần
+  // Add other necessary properties
 }
 
 // Create context with undefined initial value
@@ -224,11 +224,37 @@ export function BetProvider({ children }: { children: React.ReactNode }) {
 
       // Handle each province separately
       for (const provinceId of provinces) {
-        // Since we need to support both M1 and M2 regions
-        const provinceData = Array.isArray(provincesByRegion)
-          ? provincesByRegion.find((p) => p.province_id === provinceId)
-          : null;
+        // Find the province data to get correct region_type for each province
+        let provinceData: Province | undefined;
 
+        if (Array.isArray(provincesByRegion)) {
+          // If it's an array, find the province directly
+          provinceData = provincesByRegion.find(
+            (p) => p.province_id === provinceId
+          );
+        } else if (provincesByRegion) {
+          // If it's an object with arrays, flatten and find
+          const allProvinces: Province[] = [];
+
+          // Type-safe flattening
+          Object.values(provincesByRegion).forEach((regionProvinces) => {
+            if (Array.isArray(regionProvinces)) {
+              regionProvinces.forEach((province) => {
+                if (
+                  province &&
+                  typeof province === "object" &&
+                  "province_id" in province
+                ) {
+                  allProvinces.push(province as Province);
+                }
+              });
+            }
+          });
+
+          provinceData = allProvinces.find((p) => p.province_id === provinceId);
+        }
+
+        // Use province's region_type if available, otherwise fall back to form's regionType
         const provinceRegionType = provinceData?.region_type || regionType;
 
         // Skip if region type is not supported by this bet type

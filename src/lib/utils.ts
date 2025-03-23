@@ -64,6 +64,7 @@ export function calculateBetAmount(
 /**
  * Tính số tiền tiềm năng thắng cho một số cược
  */
+// src/lib/utils.ts - cập nhật hàm calculatePotentialWinAmount
 export function calculatePotentialWinAmount(
   betTypeId: string,
   betVariant: string | undefined,
@@ -90,9 +91,31 @@ export function calculatePotentialWinAmount(
     betVariant &&
     typeof betType.winningRatio[betVariant] === "object"
   ) {
-    // Trường hợp đặc biệt cho cược "đá" - lấy tỷ lệ cao nhất
+    // Xử lý đặc biệt cho cược "đá" - tính toán tỷ lệ thưởng phổ biến thay vì max
     const ratios = betType.winningRatio[betVariant] as Record<string, number>;
-    winningRatio = Math.max(...Object.values(ratios));
+
+    if (betTypeId === "da") {
+      // Với cược đá, dùng giá trị trường hợp phổ biến nhất cho từng biến thể
+      if (betVariant === "da2") {
+        // Đá 2 chỉ có một trường hợp
+        winningRatio = ratios["2_numbers"] || 12.5;
+      } else if (betVariant === "da3") {
+        // Đá 3 dùng trường hợp "2_numbers_no_doubles" là phổ biến nhất
+        winningRatio = ratios["2_numbers_no_doubles"] || 25;
+      } else if (betVariant === "da4") {
+        // Đá 4 dùng trường hợp "2_numbers_1_number_2_times" là phổ biến nhất
+        winningRatio = ratios["2_numbers_1_number_2_times"] || 75;
+      } else if (betVariant === "da5") {
+        // Đá 5 dùng trường hợp "3_numbers_1_number_2_times" là phổ biến nhất
+        winningRatio = ratios["3_numbers_1_number_2_times"] || 500;
+      } else {
+        // Fallback - lấy giá trị đầu tiên
+        winningRatio = Object.values(ratios)[0];
+      }
+    } else {
+      // Các loại cược khác có thể lấy giá trị tối thiểu đảm bảo an toàn
+      winningRatio = Math.min(...Object.values(ratios));
+    }
   } else {
     throw new Error(
       `Không thể xác định tỷ lệ thưởng cho biến thể ${betVariant}`

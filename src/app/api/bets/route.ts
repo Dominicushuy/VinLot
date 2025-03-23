@@ -1,4 +1,4 @@
-// src/app/api/bets/route.ts
+// src/app/api/bets/route.ts - cập nhật xử lý đặt cược
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase/client";
 import { betFormSchema } from "@/lib/validators/bet-form-validator";
@@ -79,41 +79,74 @@ export async function POST(request: Request) {
         ? JSON.parse(betTypeData.variants)
         : betTypeData.variants;
 
-    // Tạo cấu trúc dữ liệu cho utils functions, bao gồm cả numberSelectionMethods
-    const lotteryData: LotteryData = {
-      betTypes: [
-        {
-          id: betType,
-          name: betTypeData.name,
-          description: betTypeData.description,
-          digitCount: betTypeData.digit_count,
-          variants: variants,
-          regions: [
-            {
-              id: regionType,
-              name: regionType === "M1" ? "Miền Nam/Trung" : "Miền Bắc",
-              betMultipliers: regionRules[regionType].betMultipliers,
-              combinationCount: regionRules[regionType].combinationCount,
-              winningRules: regionRules[regionType].winningRules,
-            },
-          ],
-          winningRatio: winningRatio,
-        },
-      ],
-      // Thêm thuộc tính numberSelectionMethods theo yêu cầu của interface LotteryData
-      numberSelectionMethods: [],
-    };
-
     // Tính tổng tiền đặt và tiềm năng thắng
     let totalAmount = 0;
     const bets = [];
 
+    // Lấy thông tin tất cả các tỉnh đang dùng
+    const { data: provincesData, error: provincesError } = await supabase
+      .from("provinces")
+      .select("province_id, region_type")
+      .in("province_id", provinces);
+
+    if (provincesError) {
+      return NextResponse.json(
+        {
+          error: "Lỗi khi lấy thông tin tỉnh",
+          details: provincesError.message,
+        },
+        { status: 500 }
+      );
+    }
+
     for (const provinceId of provinces) {
+      // Lấy regionType chính xác cho từng tỉnh
+      const provinceData = provincesData?.find(
+        (p) => p.province_id === provinceId
+      );
+      const provinceRegionType = provinceData?.region_type || regionType;
+
+      // Kiểm tra xem loại cược có hỗ trợ regionType này không
+      if (!regionRules[provinceRegionType]) {
+        return NextResponse.json(
+          {
+            error: `Loại cược ${betType} không hỗ trợ cho tỉnh ${provinceId} (${provinceRegionType})`,
+          },
+          { status: 400 }
+        );
+      }
+
+      // Tạo cấu trúc dữ liệu cho utils functions
+      const lotteryData: LotteryData = {
+        betTypes: [
+          {
+            id: betType,
+            name: betTypeData.name,
+            description: betTypeData.description,
+            digitCount: betTypeData.digit_count,
+            variants: variants,
+            regions: [
+              {
+                id: provinceRegionType,
+                name:
+                  provinceRegionType === "M1" ? "Miền Nam/Trung" : "Miền Bắc",
+                betMultipliers: regionRules[provinceRegionType].betMultipliers,
+                combinationCount:
+                  regionRules[provinceRegionType].combinationCount,
+                winningRules: regionRules[provinceRegionType].winningRules,
+              },
+            ],
+            winningRatio: winningRatio,
+          },
+        ],
+        numberSelectionMethods: [],
+      };
+
       // Tính tiền cược cho một tỉnh
       const betAmount = calculateBetAmount(
         betType,
         betVariant,
-        regionType,
+        provinceRegionType, // Sử dụng regionType của tỉnh, không phải của form
         denomination,
         numbers.length,
         lotteryData
@@ -135,7 +168,7 @@ export async function POST(request: Request) {
         user_id: userId,
         bet_date: new Date(betDate).toISOString().split("T")[0],
         draw_date: formatLocalDate(drawDate.toISOString()),
-        region_type: regionType,
+        region_type: provinceRegionType, // Sử dụng regionType của tỉnh
         province_id: provinceId,
         bet_type: betType,
         bet_variant: betVariant,
@@ -171,7 +204,7 @@ export async function POST(request: Request) {
       .from("transactions")
       .insert({
         user_id: userId,
-        bet_id: betsData[0].id,
+        bet_id: betsData?.[0]?.id,
         amount: totalAmount,
         type: "bet",
         status: "completed",
