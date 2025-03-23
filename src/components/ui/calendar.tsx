@@ -13,14 +13,14 @@ import { useDemoMode } from "@/lib/hooks/use-demo-mode";
 
 import "react-day-picker/dist/style.css";
 
-export type EnhancedCalendarProps = React.ComponentProps<typeof DayPicker>;
+export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 
-function EnhancedCalendar({
+function Calendar({
   className,
   classNames,
   showOutsideDays = true,
   ...props
-}: EnhancedCalendarProps) {
+}: CalendarProps) {
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
@@ -74,7 +74,7 @@ function EnhancedCalendar({
     />
   );
 }
-EnhancedCalendar.displayName = "EnhancedCalendar";
+Calendar.displayName = "Calendar";
 
 // Định nghĩa props cho DatePicker
 interface DatePickerProps {
@@ -175,7 +175,7 @@ export function DatePicker({
               ref={calendarRef}
               className="absolute z-50 mt-2 bg-popover shadow-md border rounded-md w-auto"
             >
-              <EnhancedCalendar
+              <Calendar
                 mode="single"
                 selected={date}
                 onSelect={(selectedDate) => {
@@ -312,7 +312,7 @@ export function DateRangePicker({
               ref={calendarRef}
               className="absolute z-50 mt-2 bg-popover shadow-md border rounded-md w-auto"
             >
-              <EnhancedCalendar
+              <Calendar
                 mode="range"
                 selected={dateRange}
                 onSelect={(selectedRange) => {
@@ -340,4 +340,4 @@ export function DateRangePicker({
   );
 }
 
-export { EnhancedCalendar };
+export { Calendar };

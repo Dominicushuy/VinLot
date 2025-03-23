@@ -1,14 +1,12 @@
 // src/components/bet-form/region-selection.tsx
-
 "use client";
 
 import { useEffect, useState } from "react";
-import { useFormContext } from "react-hook-form";
 import { useProvincesByRegion } from "@/lib/hooks/use-provinces";
-import { BetFormValues } from "@/lib/validators/bet-form-validator";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Trash2, Info, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useBetContext } from "@/contexts/BetContext";
 
 // Map các slug ngày sang tên tiếng Việt có dấu
 const dayOfWeekNameMap: Record<string, string> = {
@@ -22,9 +20,9 @@ const dayOfWeekNameMap: Record<string, string> = {
 };
 
 export function RegionSelection() {
-  const { setValue, watch } = useFormContext<BetFormValues>();
-  const drawDate = watch("drawDate");
-  const provinces = watch("provinces") || [];
+  const { methods } = useBetContext();
+  const drawDate = methods.watch("drawDate");
+  const provinces = methods.watch("provinces") || [];
   const [validationError, setValidationError] = useState<string | null>(null);
 
   // Lấy danh sách tỉnh từ API
@@ -133,7 +131,7 @@ export function RegionSelection() {
     // Cập nhật giá trị provinces, thêm các province_id mới
     const currentProvinces = provinces || [];
     const newProvinces = [...new Set([...currentProvinces, ...provinceIds])];
-    setValue("provinces", newProvinces);
+    methods.setValue("provinces", newProvinces);
     setValidationError(null);
   };
 
@@ -142,7 +140,7 @@ export function RegionSelection() {
     const regionProvinces = getRegionProvinces(region).map(
       (p) => p.province_id
     );
-    setValue(
+    methods.setValue(
       "provinces",
       provinces.filter((p) => !regionProvinces.includes(p))
     );
@@ -150,7 +148,7 @@ export function RegionSelection() {
 
   // Xóa tất cả selection
   const clearAllProvinces = () => {
-    setValue("provinces", []);
+    methods.setValue("provinces", []);
   };
 
   // Kiểm tra validation
@@ -219,12 +217,12 @@ export function RegionSelection() {
                   className="form-checkbox text-lottery-primary rounded"
                   onChange={(e) => {
                     if (e.target.checked) {
-                      setValue("provinces", [
+                      methods.setValue("provinces", [
                         ...provinces,
                         province.province_id,
                       ]);
                     } else {
-                      setValue(
+                      methods.setValue(
                         "provinces",
                         provinces.filter((p) => p !== province.province_id)
                       );

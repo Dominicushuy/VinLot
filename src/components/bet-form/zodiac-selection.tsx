@@ -1,9 +1,8 @@
 // src/components/bet-form/zodiac-selection.tsx
 "use client";
 
-import { useFormContext } from "react-hook-form";
+import { useBetContext } from "@/contexts/BetContext";
 import { Button } from "@/components/ui/button";
-import { BetFormValues } from "@/lib/validators/bet-form-validator";
 
 // Dữ liệu 12 con giáp và số tương ứng
 const zodiacData = [
@@ -70,8 +69,8 @@ const zodiacData = [
 ];
 
 export function ZodiacSelection() {
-  const { setValue, watch } = useFormContext<BetFormValues>();
-  const currentNumbers = watch("numbers") || [];
+  const { methods } = useBetContext();
+  const currentNumbers = methods.watch("numbers") || [];
 
   // Hàm chọn con giáp
   const selectZodiac = (zodiac: (typeof zodiacData)[0]) => {
@@ -84,7 +83,7 @@ export function ZodiacSelection() {
       }
     });
 
-    setValue("numbers", newNumbers);
+    methods.setValue("numbers", newNumbers);
   };
 
   return (

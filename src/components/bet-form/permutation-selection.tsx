@@ -2,11 +2,10 @@
 "use client";
 
 import { useState } from "react";
-import { useFormContext } from "react-hook-form";
+import { useBetContext } from "@/contexts/BetContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { generatePermutations } from "@/lib/utils";
-import { BetFormValues } from "@/lib/validators/bet-form-validator";
 
 interface PermutationSelectionProps {
   digitCount: number;
@@ -15,12 +14,12 @@ interface PermutationSelectionProps {
 export function PermutationSelection({
   digitCount,
 }: PermutationSelectionProps) {
-  const { setValue, watch } = useFormContext<BetFormValues>();
+  const { methods } = useBetContext();
   const [inputValue, setInputValue] = useState("");
   const [error, setError] = useState("");
   const [preview, setPreview] = useState<string[]>([]);
 
-  const currentNumbers = watch("numbers") || [];
+  const currentNumbers = methods.watch("numbers") || [];
 
   // Xử lý tạo hoán vị
   const handleGeneratePermutations = () => {
@@ -61,7 +60,7 @@ export function PermutationSelection({
       }
     });
 
-    setValue("numbers", newNumbers);
+    methods.setValue("numbers", newNumbers);
     setPreview([]);
     setInputValue("");
   };
@@ -112,8 +111,10 @@ export function PermutationSelection({
       <div className="text-sm text-muted-foreground mt-4">
         <p>Ví dụ về đảo số:</p>
         <ul className="list-disc list-inside mt-1">
-          <li>Số "12" có các hoán vị: 12, 21</li>
-          <li>Số "123" có các hoán vị: 123, 132, 213, 231, 312, 321</li>
+          <li>Số &quot;12&quot; có các hoán vị: 12, 21</li>
+          <li>
+            Số &quot;123&quot; có các hoán vị: 123, 132, 213, 231, 312, 321
+          </li>
           <li>Số có các chữ số trùng nhau sẽ có ít hoán vị hơn</li>
         </ul>
       </div>

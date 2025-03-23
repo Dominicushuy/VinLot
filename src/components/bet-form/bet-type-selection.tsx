@@ -2,10 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useFormContext } from "react-hook-form";
 import { useBetTypes } from "@/lib/hooks/use-bet-types";
-import { useProvincesByRegion } from "@/lib/hooks/use-provinces";
-import { BetFormValues } from "@/lib/validators/bet-form-validator";
 import {
   Select,
   SelectContent,
@@ -16,7 +13,6 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { calculateBetAmount, calculatePotentialWinAmount } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,12 +21,7 @@ import { ZodiacSelection } from "./zodiac-selection";
 import { PermutationSelection } from "./permutation-selection";
 import { HighLowEvenOddSelection } from "./highlow-evenodd-selection";
 import { SequenceSelection } from "./sequence-selection";
-
-interface BetTypeSelectionProps {
-  setTotalAmount: (amount: number) => void;
-  setPotentialWin: (amount: number) => void;
-  provinces?: string[]; // Thêm prop provinces
-}
+import { useBetContext } from "@/contexts/BetContext";
 
 // Helper function để lấy tỷ lệ thưởng
 const getWinningRatio = (betTypeData: any, betVariant?: string): string => {
@@ -100,19 +91,14 @@ const getBetMultiplier = (
   return "N/A"; // Fallback
 };
 
-export function BetTypeSelection({
-  setTotalAmount,
-  setPotentialWin,
-  provinces = [],
-}: BetTypeSelectionProps) {
-  const { setValue, watch, resetField } = useFormContext<BetFormValues>();
+export function BetTypeSelection() {
+  const { methods } = useBetContext();
 
-  const regionType = watch("regionType");
-  const betType = watch("betType");
-  const betVariant = watch("betVariant");
-  const denomination = watch("denomination") || 10000;
-  const numbers = watch("numbers") || [];
-  const selectionMethod = watch("selectionMethod") || "manual";
+  const regionType = methods.watch("regionType");
+  const betType = methods.watch("betType");
+  const betVariant = methods.watch("betVariant");
+  const denomination = methods.watch("denomination") || 10000;
+  const selectionMethod = methods.watch("selectionMethod") || "manual";
 
   // State để lưu trữ các biến thể của loại cược đang chọn
   const [availableVariants, setAvailableVariants] = useState<any[]>([]);
@@ -121,9 +107,6 @@ export function BetTypeSelection({
 
   // Lấy danh sách loại cược từ API
   const { data: betTypes, isLoading } = useBetTypes();
-
-  // Thêm hook để lấy thông tin tỉnh
-  const { data: provincesByRegion } = useProvincesByRegion();
 
   // Lọc danh sách loại cược theo miền
   const filteredBetTypes = betTypes?.filter((bet) => {
@@ -167,14 +150,14 @@ export function BetTypeSelection({
       variants.length > 0 &&
       !variants.some((v: any) => v.id === betVariant)
     ) {
-      setValue("betVariant", variants[0].id);
+      methods.setValue("betVariant", variants[0].id);
     } else if (variants.length === 0) {
-      setValue("betVariant", undefined);
+      methods.setValue("betVariant", undefined);
     }
 
     // Reset numbers khi đổi loại cược
-    resetField("numbers");
-  }, [betType, betTypes, setValue, betVariant, resetField]);
+    methods.resetField("numbers");
+  }, [betType, betTypes, methods, betVariant]);
 
   // Cập nhật số chữ số khi loại cược hoặc biến thể thay đổi
   useEffect(() => {
@@ -193,123 +176,6 @@ export function BetTypeSelection({
     setDigitCount(newDigitCount);
   }, [currentBetTypeData, betVariant, availableVariants]);
 
-  // Cập nhật phần useEffect tính toán tiền cược
-  useEffect(() => {
-    if (
-      !betType ||
-      !currentBetTypeData ||
-      numbers.length === 0 ||
-      provinces.length === 0 ||
-      !provincesByRegion
-    ) {
-      setTotalAmount(0);
-      setPotentialWin(0);
-      return;
-    }
-
-    try {
-      // Parse necessary data
-      const regionRules =
-        typeof currentBetTypeData.region_rules === "string"
-          ? JSON.parse(currentBetTypeData.region_rules)
-          : currentBetTypeData.region_rules;
-
-      const winningRatio =
-        typeof currentBetTypeData.winning_ratio === "string"
-          ? JSON.parse(currentBetTypeData.winning_ratio)
-          : currentBetTypeData.winning_ratio;
-
-      // Gộp tất cả tỉnh từ các miền
-      const allProvinces = Object.values(provincesByRegion).flat();
-
-      // Nhóm các tỉnh đã chọn theo region_type (M1/M2)
-      const provincesByRegionType: Record<string, number> = { M1: 0, M2: 0 };
-
-      provinces.forEach((provinceId) => {
-        const province = allProvinces.find((p) => p.province_id === provinceId);
-        if (province) {
-          provincesByRegionType[province.region_type] += 1;
-        }
-      });
-
-      // Tính toán cho từng loại miền
-      let total = 0;
-      let potentialWinTotal = 0;
-
-      Object.entries(provincesByRegionType).forEach(([regionType, count]) => {
-        if (count > 0 && regionRules[regionType]) {
-          // Tạo dữ liệu cho miền cụ thể
-          const regionLotteryData = {
-            betTypes: [
-              {
-                id: betType,
-                name: currentBetTypeData.name,
-                description: currentBetTypeData.description,
-                digitCount: currentBetTypeData.digit_count,
-                variants: availableVariants,
-                regions: [
-                  {
-                    id: regionType,
-                    name: regionType === "M1" ? "Miền Nam/Trung" : "Miền Bắc",
-                    betMultipliers: regionRules[regionType].betMultipliers,
-                    combinationCount: regionRules[regionType].combinationCount,
-                    winningRules: regionRules[regionType].winningRules,
-                  },
-                ],
-                winningRatio: winningRatio,
-              },
-            ],
-            numberSelectionMethods: [], // Required by LotteryData type
-          };
-
-          // Tính tổng tiền đặt cho tất cả tỉnh của miền này
-          const betAmount =
-            calculateBetAmount(
-              betType,
-              betVariant,
-              regionType as "M1" | "M2",
-              denomination,
-              numbers.length,
-              regionLotteryData as any
-            ) * count;
-
-          total += betAmount;
-
-          // Tính tiềm năng thắng cho tất cả tỉnh của miền này
-          const winAmount =
-            calculatePotentialWinAmount(
-              betType,
-              betVariant,
-              denomination,
-              regionLotteryData as any
-            ) *
-            numbers.length *
-            count;
-
-          potentialWinTotal += winAmount;
-        }
-      });
-
-      setTotalAmount(total);
-      setPotentialWin(potentialWinTotal);
-    } catch (error) {
-      console.error("Error calculating amounts:", error);
-      setTotalAmount(0);
-      setPotentialWin(0);
-    }
-  }, [
-    betType,
-    betVariant,
-    denomination,
-    numbers,
-    provinces,
-    currentBetTypeData,
-    provincesByRegion,
-    setTotalAmount,
-    setPotentialWin,
-    availableVariants,
-  ]);
-
   // Phần return giữ nguyên như code cũ
   return (
     <div className="space-y-6">
@@ -325,7 +191,7 @@ export function BetTypeSelection({
           ) : (
             <Select
               value={betType}
-              onValueChange={(value) => setValue("betType", value)}
+              onValueChange={(value) => methods.setValue("betType", value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Chọn loại cược" />
@@ -359,7 +225,7 @@ export function BetTypeSelection({
             </label>
             <Select
               value={betVariant}
-              onValueChange={(value) => setValue("betVariant", value)}
+              onValueChange={(value) => methods.setValue("betVariant", value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Chọn biến thể" />
@@ -402,7 +268,9 @@ export function BetTypeSelection({
             min={1000}
             step={1000}
             value={denomination}
-            onChange={(e) => setValue("denomination", Number(e.target.value))}
+            onChange={(e) =>
+              methods.setValue("denomination", Number(e.target.value))
+            }
             className="flex-1"
           />
           <div className="flex space-x-1">
@@ -410,7 +278,7 @@ export function BetTypeSelection({
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => setValue("denomination", 5000)}
+              onClick={() => methods.setValue("denomination", 5000)}
             >
               5k
             </Button>
@@ -418,7 +286,7 @@ export function BetTypeSelection({
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => setValue("denomination", 10000)}
+              onClick={() => methods.setValue("denomination", 10000)}
             >
               10k
             </Button>
@@ -426,7 +294,7 @@ export function BetTypeSelection({
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => setValue("denomination", 50000)}
+              onClick={() => methods.setValue("denomination", 50000)}
             >
               50k
             </Button>
@@ -434,7 +302,7 @@ export function BetTypeSelection({
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => setValue("denomination", 100000)}
+              onClick={() => methods.setValue("denomination", 100000)}
             >
               100k
             </Button>
@@ -450,7 +318,9 @@ export function BetTypeSelection({
           </Label>
           <Tabs
             value={selectionMethod}
-            onValueChange={(value) => setValue("selectionMethod", value)}
+            onValueChange={(value) =>
+              methods.setValue("selectionMethod", value)
+            }
             className="w-full"
           >
             <TabsList className="grid grid-cols-5 mb-4">

@@ -1,13 +1,12 @@
 // src/components/bet-form/highlow-evenodd-selection.tsx
 "use client";
 
-import { useFormContext } from "react-hook-form";
+import { useBetContext } from "@/contexts/BetContext";
 import { Button } from "@/components/ui/button";
-import { BetFormValues } from "@/lib/validators/bet-form-validator";
 
 export function HighLowEvenOddSelection() {
-  const { setValue, watch } = useFormContext<BetFormValues>();
-  const currentNumbers = watch("numbers") || [];
+  const { methods } = useBetContext();
+  const currentNumbers = methods.watch("numbers") || [];
 
   // Tạo danh sách số cho Tài/Xỉu và Chẵn/Lẻ
   const generateHighNumbers = () => {
@@ -53,7 +52,7 @@ export function HighLowEvenOddSelection() {
       }
     });
 
-    setValue("numbers", updatedNumbers);
+    methods.setValue("numbers", updatedNumbers);
   };
 
   return (

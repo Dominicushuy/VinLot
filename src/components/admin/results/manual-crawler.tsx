@@ -15,7 +15,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
+// import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
 import { useRunCrawler } from "@/lib/hooks/use-crawler";
@@ -67,10 +67,10 @@ export function ManualCrawler() {
   const onSubmit = async (data: ManualCrawlFormValues) => {
     try {
       setCrawlingStatus({ status: "running" });
-      const result = await runCrawler.mutateAsync({
-        date: format(data.date, "yyyy-MM-dd"),
-        regions: data.regions,
-      });
+      // const result = await runCrawler.mutateAsync({
+      //   date: format(data.date, "yyyy-MM-dd"),
+      //   regions: data.regions,
+      // });
 
       setCrawlingStatus({
         status: "success",

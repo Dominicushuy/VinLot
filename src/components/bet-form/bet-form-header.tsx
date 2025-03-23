@@ -1,20 +1,15 @@
-// src/components/bet-form/bet-form-header.tsx (cập nhật)
+// src/components/bet-form/bet-form-header.tsx
 "use client";
 
-import { useState } from "react";
-import { useFormContext } from "react-hook-form";
-import { format } from "date-fns";
-import { vi } from "date-fns/locale";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
+import { useBetContext } from "@/contexts/BetContext";
+import { DatePicker } from "@/components/ui/calendar";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
-import { BetFormValues } from "@/lib/validators/bet-form-validator";
-import { CalendarIcon } from "lucide-react";
+import { InfoIcon } from "lucide-react";
+import { useDemoMode } from "@/lib/hooks/use-demo-mode";
+import { useEffect, useState } from "react";
+import { isAfter } from "date-fns";
 
 // Fake user data for demo purposes
 const demoUser = {
@@ -23,113 +18,117 @@ const demoUser = {
   balance: 10000000, // 10 triệu VND
 };
 
-export function BetFormHeader() {
-  const { setValue, watch } = useFormContext<BetFormValues>();
-  const [betDateOpen, setBetDateOpen] = useState(false);
-  const [drawDateOpen, setDrawDateOpen] = useState(false);
+export function EnhancedBetFormHeader() {
+  const { methods } = useBetContext();
+  const { isDemo } = useDemoMode();
 
-  const betDate = watch("betDate");
-  const drawDate = watch("drawDate");
+  // Date error state
+  const [dateError, setDateError] = useState<string | null>(null);
+
+  // Watch dates
+  const betDate = methods.watch("betDate");
+  const drawDate = methods.watch("drawDate");
+
+  // Validate dates
+  useEffect(() => {
+    if (betDate && drawDate) {
+      const betDateStart = new Date(betDate);
+      const drawDateStart = new Date(drawDate);
+
+      // Reset giờ, phút, giây để so sánh chỉ ngày
+      betDateStart.setHours(0, 0, 0, 0);
+      drawDateStart.setHours(0, 0, 0, 0);
+
+      if (isAfter(betDateStart, drawDateStart)) {
+        setDateError("Ngày đặt cược không thể sau ngày xổ số");
+      } else {
+        setDateError(null);
+      }
+    }
+  }, [betDate, drawDate]);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
         <h2 className="text-xl font-semibold">Thông tin cược</h2>
 
-        {/* Thêm badge thông báo chế độ demo */}
-        <div className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-medium">
-          Chế độ demo - Cho phép chọn ngày quá khứ
-        </div>
+        {isDemo && (
+          <Badge
+            variant="outline"
+            className="bg-amber-50 text-amber-800 border-amber-200"
+          >
+            Chế độ demo - Cho phép chọn ngày quá khứ
+          </Badge>
+        )}
       </div>
+
+      {dateError && (
+        <Alert
+          variant="destructive"
+          className="bg-red-50 border-red-200 text-red-800"
+        >
+          <InfoIcon className="h-4 w-4" />
+          <AlertTitle>Lỗi chọn ngày</AlertTitle>
+          <AlertDescription>{dateError}</AlertDescription>
+        </Alert>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Ngày đặt cược
-            </label>
-            <Popover open={betDateOpen} onOpenChange={setBetDateOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-left font-normal"
-                >
-                  {betDate ? (
-                    format(betDate, "EEEE, dd/MM/yyyy", { locale: vi })
-                  ) : (
-                    <span>Chọn ngày đặt cược</span>
-                  )}
-                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={betDate}
-                  onSelect={(date) => {
-                    setValue("betDate", date || new Date());
-                    setBetDateOpen(false);
-                  }}
-                  // Đã loại bỏ hạn chế ngày quá khứ
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
+          <DatePicker
+            label="Ngày đặt cược"
+            date={betDate}
+            onDateChange={(date) => {
+              if (date) {
+                methods.setValue("betDate", date);
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Ngày xổ số
-            </label>
-            <Popover open={drawDateOpen} onOpenChange={setDrawDateOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-left font-normal"
-                >
-                  {drawDate ? (
-                    format(drawDate, "EEEE, dd/MM/yyyy", { locale: vi })
-                  ) : (
-                    <span>Chọn ngày xổ số</span>
-                  )}
-                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={drawDate}
-                  onSelect={(date) => {
-                    setValue("drawDate", date || new Date());
-                    setDrawDateOpen(false);
-                  }}
-                  // Đã loại bỏ hạn chế ngày quá khứ
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
+                // Nếu drawDate hiện tại nhỏ hơn betDate mới, cập nhật drawDate
+                if (drawDate && isAfter(date, drawDate)) {
+                  methods.setValue("drawDate", date);
+                }
+              }
+            }}
+            error={methods.formState.errors.betDate?.message}
+          />
+
+          <DatePicker
+            label="Ngày xổ số"
+            date={drawDate}
+            onDateChange={(date) => date && methods.setValue("drawDate", date)}
+            minDate={betDate}
+            error={methods.formState.errors.drawDate?.message}
+          />
         </div>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="text-sm font-medium text-gray-700 mb-1 block">
               Người chơi
             </label>
-            <div className="p-3 border rounded-md bg-gray-50">
-              <p className="font-medium">{demoUser.name}</p>
-              <p className="text-sm text-gray-500">ID: {demoUser.id}</p>
+            <div className="p-4 border rounded-md bg-white shadow-sm">
+              <div className="flex items-center gap-4">
+                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-lottery-primary to-blue-400 flex items-center justify-center text-white font-bold">
+                  {demoUser.name.charAt(0)}
+                </div>
+                <div>
+                  <p className="font-medium">{demoUser.name}</p>
+                  <p className="text-sm text-gray-500">ID: {demoUser.id}</p>
+                </div>
+              </div>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="text-sm font-medium text-gray-700 mb-1 block">
               Số dư hiện tại
             </label>
-            <div className="p-3 border rounded-md bg-gray-50">
-              <p className="font-medium text-lottery-primary">
-                {formatCurrency(demoUser.balance)}
-              </p>
+            <div className="p-4 border rounded-md bg-white shadow-sm">
+              <div className="flex items-center justify-between">
+                <p className="text-gray-600">Tài khoản:</p>
+                <p className="text-xl font-bold text-lottery-primary">
+                  {formatCurrency(demoUser.balance)}
+                </p>
+              </div>
             </div>
           </div>
         </div>

@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { useFormContext } from "react-hook-form";
+import { useBetContext } from "@/contexts/BetContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,16 +12,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { BetFormValues } from "@/lib/validators/bet-form-validator";
 
 export function SequenceSelection() {
-  const { setValue, watch } = useFormContext<BetFormValues>();
+  const { methods } = useBetContext();
   const [sequenceType, setSequenceType] = useState<string>("tens");
   const [sequenceValue, setSequenceValue] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [preview, setPreview] = useState<string[]>([]);
 
-  const currentNumbers = watch("numbers") || [];
+  const currentNumbers = methods.watch("numbers") || [];
 
   // Generate sequence based on type and value
   const generateSequence = () => {
@@ -78,7 +77,7 @@ export function SequenceSelection() {
       }
     });
 
-    setValue("numbers", newNumbers);
+    methods.setValue("numbers", newNumbers);
     setPreview([]);
   };
 

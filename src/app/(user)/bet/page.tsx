@@ -1,7 +1,7 @@
-// src/app/(user)/bet/page-enhanced.tsx
+// src/app/(user)/bet/page.tsx
 "use client";
 
-import { EnhancedBetForm } from "@/components/bet-form/enhanced-bet-form";
+import { EnhancedBetForm } from "@/components/bet-form/bet-form";
 
 export default function EnhancedBetFormPage() {
   return (

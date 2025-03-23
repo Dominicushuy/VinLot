@@ -1,28 +1,25 @@
-// src/components/bet-form/bet-number-input.tsx (cập nhật)
+// src/components/bet-form/bet-number-input.tsx
 "use client";
 
 import { useState } from "react";
-import { useFormContext } from "react-hook-form";
+import { useBetContext } from "@/contexts/BetContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  BetFormValues,
-  validateBetNumbers,
-} from "@/lib/validators/bet-form-validator";
 import { Badge } from "@/components/ui/badge";
+import { validateBetNumbers } from "@/lib/validators/enhanced-bet-form-validator";
 
 interface BetNumberInputProps {
   digitCount: number;
 }
 
 export function BetNumberInput({ digitCount }: BetNumberInputProps) {
-  const { setValue, watch } = useFormContext<BetFormValues>();
+  const { methods } = useBetContext();
   const [inputValue, setInputValue] = useState("");
   const [error, setError] = useState("");
 
-  const betType = watch("betType");
-  const betVariant = watch("betVariant");
-  const numbers = watch("numbers") || [];
+  const betType = methods.watch("betType");
+  const betVariant = methods.watch("betVariant");
+  const numbers = methods.watch("numbers") || [];
 
   // Xử lý khi thêm số
   const handleAddNumber = () => {
@@ -53,14 +50,14 @@ export function BetNumberInput({ digitCount }: BetNumberInputProps) {
       }
     });
 
-    setValue("numbers", updatedNumbers);
+    methods.setValue("numbers", updatedNumbers);
     setInputValue("");
     setError("");
   };
 
   // Xóa một số
   const removeNumber = (numberToRemove: string) => {
-    setValue(
+    methods.setValue(
       "numbers",
       numbers.filter((n) => n !== numberToRemove)
     );
@@ -68,7 +65,7 @@ export function BetNumberInput({ digitCount }: BetNumberInputProps) {
 
   // Xóa tất cả số
   const clearAllNumbers = () => {
-    setValue("numbers", []);
+    methods.setValue("numbers", []);
   };
 
   return (
@@ -120,7 +117,7 @@ export function BetNumberInput({ digitCount }: BetNumberInputProps) {
                     if (isSelected) {
                       removeNumber(num);
                     } else {
-                      setValue("numbers", [...numbers, num]);
+                      methods.setValue("numbers", [...numbers, num]);
                     }
                   }}
                 >
