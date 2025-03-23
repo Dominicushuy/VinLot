@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 import { InfoIcon } from "lucide-react";
 import { useDemoMode } from "@/lib/hooks/use-demo-mode";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { isAfter } from "date-fns";
 
 // Fake user data for demo purposes
@@ -24,6 +24,9 @@ export function EnhancedBetFormHeader() {
 
   // Date error state
   const [dateError, setDateError] = useState<string | null>(null);
+
+  // Use ref to prevent infinite update cycles
+  const prevDrawDateRef = useRef<Date | null>(null);
 
   // Watch dates
   const betDate = methods.watch("betDate");
@@ -46,6 +49,27 @@ export function EnhancedBetFormHeader() {
       }
     }
   }, [betDate, drawDate]);
+
+  // Reset provinces when draw date changes
+  useEffect(() => {
+    if (!drawDate) return;
+
+    const currentDrawDate = new Date(drawDate);
+    currentDrawDate.setHours(0, 0, 0, 0);
+
+    if (prevDrawDateRef.current) {
+      const prevDate = new Date(prevDrawDateRef.current);
+      prevDate.setHours(0, 0, 0, 0);
+
+      // Compare dates
+      if (currentDrawDate.getTime() !== prevDate.getTime()) {
+        methods.setValue("provinces", []);
+      }
+    }
+
+    // Update ref value after comparison
+    prevDrawDateRef.current = currentDrawDate;
+  }, [drawDate, methods]);
 
   return (
     <div className="space-y-6">
@@ -94,7 +118,11 @@ export function EnhancedBetFormHeader() {
           <DatePicker
             label="Ngày xổ số"
             date={drawDate}
-            onDateChange={(date) => date && methods.setValue("drawDate", date)}
+            onDateChange={(date) => {
+              if (date) {
+                methods.setValue("drawDate", date);
+              }
+            }}
             minDate={betDate}
             error={methods.formState.errors.drawDate?.message}
           />
