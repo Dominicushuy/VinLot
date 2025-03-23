@@ -103,6 +103,8 @@ export function DatePicker({
 }: DatePickerProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const { isDemo } = useDemoMode();
+  const calendarRef = React.useRef<HTMLDivElement>(null);
+  const buttonRef = React.useRef<HTMLButtonElement>(null);
 
   // Kiểm tra disable dates
   const isDateDisabled = React.useCallback(
@@ -125,12 +127,33 @@ export function DatePicker({
     [isDemo, minDate, maxDate, disabledDates]
   );
 
+  // Xử lý click ngoài
+  React.useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        isOpen &&
+        calendarRef.current &&
+        buttonRef.current &&
+        !calendarRef.current.contains(event.target as Node) &&
+        !buttonRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
+
   return (
     <div className="space-y-2">
       <div className="grid gap-1.5">
         <label className="text-sm font-medium text-gray-700">{label}</label>
         <div className="relative">
           <button
+            ref={buttonRef}
             type="button"
             onClick={() => setIsOpen(!isOpen)}
             disabled={disabled}
@@ -148,7 +171,10 @@ export function DatePicker({
           </button>
 
           {isOpen && (
-            <div className="absolute z-50 mt-2 bg-popover shadow-md border rounded-md w-auto">
+            <div
+              ref={calendarRef}
+              className="absolute z-50 mt-2 bg-popover shadow-md border rounded-md w-auto"
+            >
               <EnhancedCalendar
                 mode="single"
                 selected={date}
@@ -205,6 +231,8 @@ export function DateRangePicker({
 }: DateRangePickerProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const { isDemo } = useDemoMode();
+  const calendarRef = React.useRef<HTMLDivElement>(null);
+  const buttonRef = React.useRef<HTMLButtonElement>(null);
 
   // Kiểm tra disable dates
   const isDateDisabled = React.useCallback(
@@ -227,6 +255,26 @@ export function DateRangePicker({
     [isDemo, minDate, maxDate, disabledDates]
   );
 
+  // Xử lý click ngoài
+  React.useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        isOpen &&
+        calendarRef.current &&
+        buttonRef.current &&
+        !calendarRef.current.contains(event.target as Node) &&
+        !buttonRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
+
   const displayText = React.useMemo(() => {
     if (!dateRange || !dateRange.from) return "Chọn khoảng thời gian";
     if (!dateRange.to)
@@ -244,6 +292,7 @@ export function DateRangePicker({
         <label className="text-sm font-medium text-gray-700">{label}</label>
         <div className="relative">
           <button
+            ref={buttonRef}
             type="button"
             onClick={() => setIsOpen(!isOpen)}
             disabled={disabled}
@@ -259,11 +308,20 @@ export function DateRangePicker({
           </button>
 
           {isOpen && (
-            <div className="absolute z-50 mt-2 bg-popover shadow-md border rounded-md w-auto">
+            <div
+              ref={calendarRef}
+              className="absolute z-50 mt-2 bg-popover shadow-md border rounded-md w-auto"
+            >
               <EnhancedCalendar
                 mode="range"
                 selected={dateRange}
-                onSelect={onDateRangeChange}
+                onSelect={(selectedRange) => {
+                  onDateRangeChange(selectedRange);
+                  // Chỉ đóng khi chọn xong range (to)
+                  if (selectedRange?.to) {
+                    setIsOpen(false);
+                  }
+                }}
                 disabled={isDateDisabled}
                 initialFocus
               />

@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { useBetTypes } from "@/lib/hooks/use-bet-types";
+import { useProvincesByRegion } from "@/lib/hooks/use-provinces";
 import { BetFormValues } from "@/lib/validators/bet-form-validator";
 import {
   Select,
@@ -28,6 +29,7 @@ import { SequenceSelection } from "./sequence-selection";
 interface BetTypeSelectionProps {
   setTotalAmount: (amount: number) => void;
   setPotentialWin: (amount: number) => void;
+  provinces?: string[]; // Thêm prop provinces
 }
 
 // Helper function để lấy tỷ lệ thưởng
@@ -101,6 +103,7 @@ const getBetMultiplier = (
 export function BetTypeSelection({
   setTotalAmount,
   setPotentialWin,
+  provinces = [],
 }: BetTypeSelectionProps) {
   const { setValue, watch, resetField } = useFormContext<BetFormValues>();
 
@@ -108,7 +111,6 @@ export function BetTypeSelection({
   const betType = watch("betType");
   const betVariant = watch("betVariant");
   const denomination = watch("denomination") || 10000;
-  const provinces = watch("provinces") || [];
   const numbers = watch("numbers") || [];
   const selectionMethod = watch("selectionMethod") || "manual";
 
@@ -119,6 +121,9 @@ export function BetTypeSelection({
 
   // Lấy danh sách loại cược từ API
   const { data: betTypes, isLoading } = useBetTypes();
+
+  // Thêm hook để lấy thông tin tỉnh
+  const { data: provincesByRegion } = useProvincesByRegion();
 
   // Lọc danh sách loại cược theo miền
   const filteredBetTypes = betTypes?.filter((bet) => {
@@ -188,13 +193,14 @@ export function BetTypeSelection({
     setDigitCount(newDigitCount);
   }, [currentBetTypeData, betVariant, availableVariants]);
 
-  // Tính tổng tiền đặt và tiềm năng thắng
+  // Cập nhật phần useEffect tính toán tiền cược
   useEffect(() => {
     if (
       !betType ||
       !currentBetTypeData ||
       numbers.length === 0 ||
-      provinces.length === 0
+      provinces.length === 0 ||
+      !provincesByRegion
     ) {
       setTotalAmount(0);
       setPotentialWin(0);
@@ -213,54 +219,75 @@ export function BetTypeSelection({
           ? JSON.parse(currentBetTypeData.winning_ratio)
           : currentBetTypeData.winning_ratio;
 
-      // Giả lập fake data structure cho mục đích demo
-      const lotteryData = {
-        betTypes: [
-          {
-            id: betType,
-            name: currentBetTypeData.name,
-            description: currentBetTypeData.description,
-            digitCount: currentBetTypeData.digit_count,
-            variants: availableVariants,
-            regions: [
-              {
-                id: regionType,
-                name: regionType === "M1" ? "Miền Nam/Trung" : "Miền Bắc",
-                betMultipliers: regionRules[regionType].betMultipliers,
-                combinationCount: regionRules[regionType].combinationCount,
-                winningRules: regionRules[regionType].winningRules,
-              },
-            ],
-            winningRatio: winningRatio,
-          },
-        ],
-      };
+      // Gộp tất cả tỉnh từ các miền
+      const allProvinces = Object.values(provincesByRegion).flat();
 
-      // Tính cho mỗi tỉnh
+      // Nhóm các tỉnh đã chọn theo region_type (M1/M2)
+      const provincesByRegionType: Record<string, number> = { M1: 0, M2: 0 };
+
+      provinces.forEach((provinceId) => {
+        const province = allProvinces.find((p) => p.province_id === provinceId);
+        if (province) {
+          provincesByRegionType[province.region_type] += 1;
+        }
+      });
+
+      // Tính toán cho từng loại miền
       let total = 0;
       let potentialWinTotal = 0;
 
-      provinces.forEach(() => {
-        // Tính tổng tiền đặt
-        const betAmount = calculateBetAmount(
-          betType,
-          betVariant,
-          regionType,
-          denomination,
-          numbers.length,
-          lotteryData as any
-        );
-        total += betAmount;
+      Object.entries(provincesByRegionType).forEach(([regionType, count]) => {
+        if (count > 0 && regionRules[regionType]) {
+          // Tạo dữ liệu cho miền cụ thể
+          const regionLotteryData = {
+            betTypes: [
+              {
+                id: betType,
+                name: currentBetTypeData.name,
+                description: currentBetTypeData.description,
+                digitCount: currentBetTypeData.digit_count,
+                variants: availableVariants,
+                regions: [
+                  {
+                    id: regionType,
+                    name: regionType === "M1" ? "Miền Nam/Trung" : "Miền Bắc",
+                    betMultipliers: regionRules[regionType].betMultipliers,
+                    combinationCount: regionRules[regionType].combinationCount,
+                    winningRules: regionRules[regionType].winningRules,
+                  },
+                ],
+                winningRatio: winningRatio,
+              },
+            ],
+            numberSelectionMethods: [], // Required by LotteryData type
+          };
 
-        // Tính tiềm năng thắng
-        const winAmount =
-          calculatePotentialWinAmount(
-            betType,
-            betVariant,
-            denomination,
-            lotteryData as any
-          ) * numbers.length;
-        potentialWinTotal += winAmount;
+          // Tính tổng tiền đặt cho tất cả tỉnh của miền này
+          const betAmount =
+            calculateBetAmount(
+              betType,
+              betVariant,
+              regionType as "M1" | "M2",
+              denomination,
+              numbers.length,
+              regionLotteryData as any
+            ) * count;
+
+          total += betAmount;
+
+          // Tính tiềm năng thắng cho tất cả tỉnh của miền này
+          const winAmount =
+            calculatePotentialWinAmount(
+              betType,
+              betVariant,
+              denomination,
+              regionLotteryData as any
+            ) *
+            numbers.length *
+            count;
+
+          potentialWinTotal += winAmount;
+        }
       });
 
       setTotalAmount(total);
@@ -273,16 +300,17 @@ export function BetTypeSelection({
   }, [
     betType,
     betVariant,
-    regionType,
     denomination,
     numbers,
     provinces,
     currentBetTypeData,
+    provincesByRegion,
     setTotalAmount,
     setPotentialWin,
     availableVariants,
   ]);
 
+  // Phần return giữ nguyên như code cũ
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-semibold mb-4">Chọn loại cược và số tiền</h2>

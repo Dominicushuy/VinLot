@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useForm, FormProvider } from "react-hook-form";
+import { useForm, FormProvider, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   enhancedBetFormSchema,
@@ -48,7 +48,6 @@ interface Step {
   id: string;
   title: string;
   description: string;
-  component: React.ReactNode;
   validate?: () => boolean;
 }
 
@@ -90,12 +89,33 @@ export function EnhancedBetForm() {
     mode: "onChange",
   });
 
+  // Sử dụng useWatch để theo dõi thay đổi của provinces tốt hơn
+  const watchedProvinces = useWatch({
+    control: methods.control,
+    name: "provinces",
+  });
+
+  // Theo dõi tất cả các giá trị quan trọng để tính toán lại tổng tiền
+  const betType = useWatch({ control: methods.control, name: "betType" });
+  const betVariant = useWatch({ control: methods.control, name: "betVariant" });
+  const numbers = useWatch({ control: methods.control, name: "numbers" });
+  const denomination = useWatch({
+    control: methods.control,
+    name: "denomination",
+  });
+
+  console.log({
+    watchedProvinces,
+    betType,
+    betVariant,
+    numbers,
+    denomination,
+    totalAmount,
+  });
+
   // Watch form values
   const betDate = methods.watch("betDate");
   const drawDate = methods.watch("drawDate");
-  const provinces = methods.watch("provinces");
-  const betType = methods.watch("betType");
-  const numbers = methods.watch("numbers");
 
   // Define form steps
   const steps: Step[] = [
@@ -103,26 +123,18 @@ export function EnhancedBetForm() {
       id: "dates",
       title: "Chọn ngày & thông tin cơ bản",
       description: "Chọn ngày đặt cược và ngày xổ số",
-      component: <EnhancedBetFormHeader />,
       validate: () => !!betDate && !!drawDate,
     },
     {
       id: "region",
       title: "Chọn đài xổ số",
       description: "Chọn miền và đài xổ số",
-      component: <RegionSelection />,
-      validate: () => provinces.length > 0,
+      validate: () => watchedProvinces && watchedProvinces.length > 0,
     },
     {
       id: "betType",
       title: "Loại cược & số",
       description: "Chọn loại cược và nhập số đánh",
-      component: (
-        <BetTypeSelection
-          setTotalAmount={setTotalAmount}
-          setPotentialWin={setPotentialWin}
-        />
-      ),
       validate: () => !!betType && numbers.length > 0,
     },
   ];
@@ -135,12 +147,18 @@ export function EnhancedBetForm() {
       steps[2].validate ? steps[2].validate() : false,
     ];
     setIsCompleted(newCompletionStatus);
-  }, [betDate, drawDate, provinces, betType, numbers]);
+  }, [betDate, drawDate, watchedProvinces, betType, numbers]);
 
   // Check balance when total amount changes
   useEffect(() => {
     setIsBalanceEnough(demoUser.balance >= totalAmount);
   }, [totalAmount]);
+
+  // Đảm bảo khi provinces thay đổi, total amount được tính toán lại
+  useEffect(() => {
+    // Chỉ log để xác nhận effect được gọi khi provinces thay đổi
+    console.log("Provinces changed:", watchedProvinces?.length);
+  }, [watchedProvinces]);
 
   // Handle next step
   const handleNext = () => {
@@ -412,7 +430,15 @@ export function EnhancedBetForm() {
 
         {/* Current Step Content */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          {steps[currentStep].component}
+          {currentStep === 0 && <EnhancedBetFormHeader />}
+          {currentStep === 1 && <RegionSelection />}
+          {currentStep === 2 && (
+            <BetTypeSelection
+              setTotalAmount={setTotalAmount}
+              setPotentialWin={setPotentialWin}
+              provinces={watchedProvinces || []}
+            />
+          )}
         </div>
 
         {/* Error messages */}
