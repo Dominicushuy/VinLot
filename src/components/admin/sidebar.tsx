@@ -13,7 +13,6 @@ import {
   Settings,
   Users,
   FileText,
-  AlertTriangle,
   LogOut,
   Database,
   Home,
@@ -67,12 +66,12 @@ const menuItems = [
     href: "/admin/crawler-logs",
     icon: <Database className="h-5 w-5" />,
   },
-  {
-    title: "Công cụ đối soát nâng cao",
-    href: "/admin/advanced-process",
-    icon: <AlertTriangle className="h-5 w-5" />,
-    highlight: true,
-  },
+  // {
+  //   title: "Công cụ đối soát nâng cao",
+  //   href: "/admin/advanced-process",
+  //   icon: <AlertTriangle className="h-5 w-5" />,
+  //   highlight: true,
+  // },
 ];
 
 export function AdminSidebar() {
@@ -120,11 +119,6 @@ export function AdminSidebar() {
               >
                 <span className="mr-3">{item.icon}</span>
                 {item.title}
-                {item.highlight && (
-                  <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 p-1 text-xs font-medium">
-                    !
-                  </span>
-                )}
               </Link>
             </li>
           ))}
@@ -148,11 +142,6 @@ export function AdminSidebar() {
               >
                 <span className="mr-3">{item.icon}</span>
                 {item.title}
-                {item.highlight && (
-                  <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 p-1 text-xs font-medium">
-                    !
-                  </span>
-                )}
               </Link>
             </li>
           ))}
