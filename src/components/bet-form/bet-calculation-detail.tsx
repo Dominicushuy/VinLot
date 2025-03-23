@@ -88,29 +88,40 @@ export function BetCalculationDetail() {
   const provinceDetails = getProvinceDetails();
 
   // Get bet multiplier for a province
-  const getBetMultiplier = (provinceRegionType: string) => {
+  const getBetMultiplier = (provinceRegionType: string): number | string => {
     if (!regionRules[provinceRegionType]) return "N/A";
 
     const betMultipliers = regionRules[provinceRegionType].betMultipliers;
 
     if (betVariant && typeof betMultipliers === "object") {
-      return betMultipliers[betVariant];
+      return betMultipliers[betVariant] || "N/A";
     }
 
     return typeof betMultipliers === "number"
       ? betMultipliers
-      : betMultipliers[Object.keys(betMultipliers)[0]];
+      : typeof betMultipliers === "object" && betMultipliers !== null
+      ? betMultipliers[Object.keys(betMultipliers)[0]] || "N/A"
+      : "N/A";
   };
 
   // Get winning ratio
-  const getWinningRatioValue = () => {
+  const getWinningRatioValue = (): string => {
     if (typeof winningRatio === "number") {
-      return winningRatio;
+      return winningRatio.toString();
     }
 
-    if (betVariant && typeof winningRatio === "object") {
+    if (
+      betVariant &&
+      typeof winningRatio === "object" &&
+      winningRatio !== null
+    ) {
       const ratio = winningRatio[betVariant];
-      return typeof ratio === "number" ? ratio : Object.values(ratio)[0];
+      if (typeof ratio === "number") {
+        return ratio.toString();
+      } else if (typeof ratio === "object" && ratio !== null) {
+        const firstValue = Object.values(ratio)[0];
+        return typeof firstValue === "number" ? firstValue.toString() : "N/A";
+      }
     }
 
     return "N/A";
@@ -125,8 +136,8 @@ export function BetCalculationDetail() {
       const winRatio = getWinningRatioValue();
       if (winRatio === "N/A") return null;
 
-      const betAmount = denomination * multiplier * numbers.length;
-      const winAmount = denomination * (winRatio as number) * numbers.length;
+      const betAmount = denomination * (multiplier as number) * numbers.length;
+      const winAmount = denomination * Number(winRatio) * numbers.length;
 
       return {
         ...province,
@@ -135,7 +146,7 @@ export function BetCalculationDetail() {
         winAmount,
       };
     })
-    .filter(Boolean);
+    .filter((calc): calc is NonNullable<typeof calc> => calc !== null);
 
   return (
     <Accordion
@@ -207,7 +218,7 @@ export function BetCalculationDetail() {
                     className="border-t pt-2 first:border-t-0 first:pt-0"
                   >
                     <div className="font-medium">
-                      {calc.name} ({calc.regionType})
+                      {calc?.name} ({calc.regionType})
                     </div>
                     <ul className="space-y-1 mt-1">
                       <li className="flex justify-between">

@@ -17,6 +17,16 @@ interface NumberGridProps {
   maxSelections?: number;
 }
 
+// Define the type for numberGroups
+interface NumberGroups {
+  [key: string]: string[] | undefined;
+  even?: string[];
+  odd?: string[];
+  high?: string[];
+  low?: string[];
+  doubles?: string[];
+}
+
 export function NumberGrid({
   selectedNumbers,
   onChange,
@@ -79,7 +89,7 @@ export function NumberGrid({
   };
 
   // Initialize predefined number groups (for 2 digits)
-  const numberGroups = useMemo(() => {
+  const numberGroups = useMemo<NumberGroups>(() => {
     if (digitCount !== 2) return {};
 
     // For 2 digits, create groups like: Even, Odd, High (50-99), Low (00-49), etc.
@@ -118,10 +128,10 @@ export function NumberGrid({
 
   // Filter based on active tab
   const displayNumbers = useMemo(() => {
-    if (activeTab === "all" || !numberGroups[activeTab]) {
+    if (activeTab === "all" || !(activeTab in numberGroups)) {
       return filteredNumbers;
     }
-    return numberGroups[activeTab].filter(
+    return (numberGroups[activeTab] || []).filter(
       (n) => !searchTerm || n.includes(searchTerm)
     );
   }, [filteredNumbers, activeTab, numberGroups, searchTerm]);
