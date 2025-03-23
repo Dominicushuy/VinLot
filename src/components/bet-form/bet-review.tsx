@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp, Info } from "lucide-react";
 import { useState } from "react";
+import { BetCalculationDetail } from "./bet-calculation-detail"; // Import component
 
 // Helper function để lấy tỷ lệ thưởng
 const getWinningRatio = (betTypeData: any, betVariant?: string): string => {
@@ -297,6 +298,9 @@ export function BetReview() {
                 </div>
               )}
             </div>
+
+            {/* Thêm component BetCalculationDetail trực tiếp vào BetReview */}
+            {hasData && <BetCalculationDetail />}
           </>
         )}
       </div>
