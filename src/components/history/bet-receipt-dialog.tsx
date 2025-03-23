@@ -10,6 +10,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
 
 interface BetReceiptDialogProps {
   open: boolean;
@@ -24,13 +25,37 @@ export function BetReceiptDialog({
   betData,
   onPrint,
 }: BetReceiptDialogProps) {
+  const [isLoading, setIsLoading] = useState(false);
+
   if (!betData) return null;
+
+  // Xác định các số trúng (trong môi trường thực tế sẽ cần logic phức tạp hơn)
+  const winningNumbers =
+    betData.bet.status === "won"
+      ? betData.bet.numbers.slice(0, Math.min(3, betData.bet.numbers.length))
+      : [];
+
+  const handlePrint = async () => {
+    setIsLoading(true);
+    try {
+      await onPrint();
+    } catch (error) {
+      console.error("Error printing receipt:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Xem trước phiếu cược</DialogTitle>
+          <DialogTitle className="flex items-center justify-between">
+            <span>Xem trước phiếu cược</span>
+            <span className="text-sm font-normal text-gray-500">
+              ID: {betData.bet.id.substring(0, 8)}...
+            </span>
+          </DialogTitle>
         </DialogHeader>
 
         <BetReceiptPreview
@@ -38,13 +63,23 @@ export function BetReceiptDialog({
           province={betData.province}
           betType={betData.betType}
           betVariant={betData.betVariant}
+          winningNumbers={winningNumbers}
         />
 
-        <DialogFooter className="no-print">
+        <DialogFooter className="no-print gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Đóng
           </Button>
-          <Button onClick={onPrint}>In phiếu</Button>
+          <Button
+            onClick={handlePrint}
+            disabled={isLoading}
+            className="relative"
+          >
+            {isLoading ? "Đang in..." : "In phiếu"}
+            {betData.bet.status === "won" && (
+              <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-green-500" />
+            )}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

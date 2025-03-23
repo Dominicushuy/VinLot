@@ -85,6 +85,7 @@ export function BetHistoryTable({ bets, isLoading }: BetHistoryTableProps) {
             <TableHead>Mệnh giá</TableHead>
             <TableHead className="text-right">Tổng cược</TableHead>
             <TableHead className="text-right">Thắng</TableHead>
+            <TableHead className="text-right">Lời/Lỗ</TableHead>
             <TableHead>Trạng thái</TableHead>
             <TableHead className="text-right">Thao tác</TableHead>
           </TableRow>
@@ -95,6 +96,18 @@ export function BetHistoryTable({ bets, isLoading }: BetHistoryTableProps) {
               text: bet.status,
               variant: "outline",
             };
+
+            // Tính toán lời/lỗ
+            const profitLoss =
+              bet.status === "won"
+                ? (bet.win_amount || 0) - bet.total_amount
+                : -bet.total_amount;
+
+            // Xác định màu sắc cho lời/lỗ
+            const profitLossClass =
+              profitLoss >= 0
+                ? "text-green-600 font-medium"
+                : "text-red-600 font-medium";
 
             return (
               <TableRow key={bet.id}>
@@ -133,6 +146,12 @@ export function BetHistoryTable({ bets, isLoading }: BetHistoryTableProps) {
                 </TableCell>
                 <TableCell className="text-right">
                   {bet.win_amount ? formatCurrency(bet.win_amount) : "-"}
+                </TableCell>
+                <TableCell className={`text-right ${profitLossClass}`}>
+                  {bet.status !== "pending" && (profitLoss >= 0 ? " +" : " -")}
+                  {bet.status === "pending"
+                    ? "-"
+                    : formatCurrency(Math.abs(profitLoss))}
                 </TableCell>
                 <TableCell>
                   <Badge variant={status.variant}>{status.text}</Badge>

@@ -1,21 +1,27 @@
+// src/components/history/check-bet-button.tsx
 "use client";
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
 
 interface CheckBetButtonProps {
   betId: string;
   onResultsChecked?: (results: any) => void;
+  variant?: "default" | "outline" | "secondary" | "ghost" | "lottery";
+  size?: "default" | "sm" | "lg" | "icon";
 }
 
 export function CheckBetButton({
   betId,
   onResultsChecked,
+  variant = "lottery",
+  size = "sm",
 }: CheckBetButtonProps) {
   const { toast } = useToast();
   const [isChecking, setIsChecking] = useState(false);
+  const [lastCheckTime, setLastCheckTime] = useState<Date | null>(null);
 
   const handleCheckResults = async () => {
     try {
@@ -29,20 +35,34 @@ export function CheckBetButton({
       }
 
       const data = await response.json();
+      setLastCheckTime(new Date());
 
       if (onResultsChecked) {
         onResultsChecked(data);
       }
 
+      let toastVariant: "default" | "destructive" | "lottery" = "default";
+      let title = "Kiểm tra thành công";
+      let description = "";
+
+      if (data.status === "pending") {
+        description = "Phiếu đang chờ kết quả xổ số.";
+      } else if (data.status === "won") {
+        toastVariant = "lottery";
+        title = "Chúc mừng! Phiếu của bạn đã trúng thưởng";
+        description = `Phiếu trúng thưởng ${new Intl.NumberFormat("vi-VN", {
+          style: "currency",
+          currency: "VND",
+          maximumFractionDigits: 0,
+        }).format(data.win_amount || 0)}`;
+      } else {
+        description = "Rất tiếc! Phiếu của bạn không trúng thưởng.";
+      }
+
       toast({
-        title: "Kiểm tra thành công",
-        description:
-          data.status === "pending"
-            ? "Phiếu đang chờ kết quả xổ số."
-            : data.status === "won"
-            ? "Chúc mừng! Phiếu của bạn đã trúng thưởng."
-            : "Rất tiếc! Phiếu của bạn không trúng thưởng.",
-        variant: data.status === "won" ? "lottery" : "default",
+        title,
+        description,
+        variant: toastVariant,
       });
     } catch (error: any) {
       console.error("Error checking bet results:", error);
@@ -57,20 +77,31 @@ export function CheckBetButton({
   };
 
   return (
-    <Button
-      variant="lottery"
-      size="sm"
-      onClick={handleCheckResults}
-      disabled={isChecking}
-    >
-      {isChecking ? (
-        <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Đang kiểm tra...
-        </>
-      ) : (
-        "Kiểm tra kết quả"
+    <div className="inline-flex flex-col items-center">
+      <Button
+        variant={variant as any}
+        size={size}
+        onClick={handleCheckResults}
+        disabled={isChecking}
+        className="relative"
+      >
+        {isChecking ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Đang kiểm tra...
+          </>
+        ) : (
+          <>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Kiểm tra kết quả
+          </>
+        )}
+      </Button>
+      {lastCheckTime && (
+        <span className="text-xs text-gray-500 mt-1">
+          Kiểm tra lúc: {lastCheckTime.toLocaleTimeString()}
+        </span>
       )}
-    </Button>
+    </div>
   );
 }

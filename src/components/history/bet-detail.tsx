@@ -2,6 +2,7 @@
 import { formatCurrency } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BetDetailAnalysis } from "./bet-detail-analysis";
 
 // Define interfaces for props
 interface Bet {
@@ -10,6 +11,9 @@ interface Bet {
   numbers: string[];
   total_amount: number;
   win_amount?: number;
+  bet_type: string;
+  bet_variant?: string;
+  denomination: number;
   // Thêm các field khác nếu cần
 }
 
@@ -22,13 +26,23 @@ interface Province {
 interface BetType {
   name: string;
   bet_type_id?: string;
+  winning_ratio?: any;
+  variants?: any;
   // Thêm các field khác nếu cần
 }
 
 interface Result {
   id: string;
-  draw_date: string;
-  numbers: string[];
+  date: string;
+  special_prize?: string[];
+  first_prize?: string[];
+  second_prize?: string[];
+  third_prize?: string[];
+  fourth_prize?: string[];
+  fifth_prize?: string[];
+  sixth_prize?: string[];
+  seventh_prize?: string[];
+  eighth_prize?: string[];
   // Thêm các field khác nếu cần
 }
 
@@ -39,7 +53,58 @@ interface BetDetailProps {
   results: Result | null;
 }
 
-export function BetDetail({ bet, results }: BetDetailProps) {
+// Đây là phiên bản đơn giản để xác định các số trúng
+// Trong môi trường thực tế, bạn cần logic phức tạp hơn theo từng loại cược
+function determineWinningNumbers(bet: Bet, results: Result): string[] {
+  // Lấy tất cả các số cuối từ kết quả (đơn giản hóa)
+  const lastTwoDigits: string[] = [];
+  const allPrizes = [
+    ...(results.special_prize || []),
+    ...(results.first_prize || []),
+    ...(results.second_prize || []),
+    ...(results.third_prize || []),
+    ...(results.fourth_prize || []),
+    ...(results.fifth_prize || []),
+    ...(results.sixth_prize || []),
+    ...(results.seventh_prize || []),
+    ...(results.eighth_prize || []),
+  ];
+
+  // Lấy hai số cuối của tất cả giải
+  allPrizes.forEach((prize) => {
+    if (prize) {
+      lastTwoDigits.push(prize.slice(-2));
+    }
+  });
+
+  // Tìm các số trong cược trùng với kết quả
+  return bet.numbers.filter((num) => lastTwoDigits.includes(num));
+}
+
+// Hàm lấy tỷ lệ thưởng theo loại cược và biến thể
+function getWinRatio(betType: BetType | null, bet: Bet): number | string {
+  if (!betType || !betType.winning_ratio) return "N/A";
+
+  const winningRatio =
+    typeof betType.winning_ratio === "string"
+      ? JSON.parse(betType.winning_ratio)
+      : betType.winning_ratio;
+
+  if (typeof winningRatio === "number") return winningRatio;
+
+  if (bet.bet_variant && winningRatio[bet.bet_variant]) {
+    if (typeof winningRatio[bet.bet_variant] === "number") {
+      return winningRatio[bet.bet_variant];
+    } else {
+      // Đối với các loại cược phức tạp như Đá có nhiều tỷ lệ
+      return "Xem bảng tỷ lệ";
+    }
+  }
+
+  return "N/A";
+}
+
+export function BetDetail({ bet, province, betType, results }: BetDetailProps) {
   // Nếu chưa có kết quả, hiển thị đang chờ
   if (!results && bet.status === "pending") {
     return (
@@ -82,6 +147,21 @@ export function BetDetail({ bet, results }: BetDetailProps) {
 
   // Nếu đã có kết quả
   if (results) {
+    const winningNumbers =
+      bet.status === "won" ? determineWinningNumbers(bet, results) : [];
+    const winRatio = getWinRatio(betType, bet);
+
+    // Tạo chi tiết giả cho các số trúng (trong môi trường thực tế sẽ có logic phức tạp hơn)
+    const winningDetails = winningNumbers.map((number, index) => ({
+      number,
+      prize: index === 0 ? "Giải đặc biệt" : `Giải ${index + 1}`,
+      description:
+        index === 0
+          ? "2 số cuối trùng giải đặc biệt"
+          : `2 số cuối trùng giải ${index + 1}`,
+      amount: (bet.win_amount || 0) / winningNumbers.length,
+    }));
+
     // Hiển thị cược đã thắng
     if (bet.status === "won") {
       return (
@@ -123,6 +203,21 @@ export function BetDetail({ bet, results }: BetDetailProps) {
               <h4 className="font-medium mb-2">Chi tiết đối soát</h4>
               <div className="space-y-2">
                 <div className="flex justify-between">
+                  <span className="text-gray-600">Loại cược:</span>
+                  <span>
+                    {betType?.name || bet.bet_type}
+                    {bet.bet_variant && ` (${bet.bet_variant})`}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Tỷ lệ thưởng:</span>
+                  <span>{winRatio}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Mệnh giá:</span>
+                  <span>{formatCurrency(bet.denomination)}</span>
+                </div>
+                <div className="flex justify-between">
                   <span className="text-gray-600">Số tiền đặt:</span>
                   <span>{formatCurrency(bet.total_amount)}</span>
                 </div>
@@ -142,18 +237,81 @@ export function BetDetail({ bet, results }: BetDetailProps) {
             </div>
 
             <div className="mt-4 pt-4 border-t">
-              <h4 className="font-medium mb-2">Các số trúng</h4>
-              <div className="flex flex-wrap gap-2">
-                {/* Giả định về các số trúng - cần một logic phức tạp hơn để xác định chính xác */}
-                {bet.numbers.map((number, index) => (
-                  <Badge
-                    key={index}
-                    variant={true ? "lottery" : "outline"}
-                    className="px-3 py-1"
-                  >
-                    {number}
-                  </Badge>
-                ))}
+              <h4 className="font-medium mb-3">Chi tiết số trúng thưởng</h4>
+              <div className="mb-4">
+                <p className="text-sm text-gray-600 mb-2">
+                  Các số đã đánh ({bet.numbers.length}):
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {bet.numbers.map((number, index) => (
+                    <Badge
+                      key={index}
+                      variant={
+                        winningNumbers.includes(number) ? "lottery" : "outline"
+                      }
+                      className={`px-3 py-1 ${
+                        winningNumbers.includes(number)
+                          ? "ring-2 ring-offset-2 ring-green-100"
+                          : ""
+                      }`}
+                    >
+                      {number}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-green-50 p-3 rounded-md mt-4">
+                <p className="text-sm font-medium text-green-700 mb-2">
+                  Công thức tính tiền thắng:
+                </p>
+                <p className="text-sm text-green-600">
+                  {winningNumbers.length} số trúng ×{" "}
+                  {formatCurrency(bet.denomination)} ×
+                  {typeof winRatio === "number"
+                    ? ` tỷ lệ ${winRatio}`
+                    : " tỷ lệ thưởng tương ứng"}{" "}
+                  ={formatCurrency(bet.win_amount || 0)}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <BetDetailAnalysis
+                bet={bet}
+                betType={betType}
+                results={results}
+                winningNumbers={winningNumbers}
+                winningDetails={winningDetails}
+              />
+            </div>
+
+            {/* Hiển thị kết quả xổ số liên quan */}
+            <div className="mt-4 pt-4 border-t">
+              <h4 className="font-medium mb-2">Kết quả xổ số liên quan</h4>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <tbody>
+                    {results.special_prize &&
+                      results.special_prize.length > 0 && (
+                        <tr>
+                          <td className="py-1 pr-2 font-medium text-gray-600">
+                            Giải đặc biệt:
+                          </td>
+                          <td>{results.special_prize.join(", ")}</td>
+                        </tr>
+                      )}
+                    {results.first_prize && results.first_prize.length > 0 && (
+                      <tr>
+                        <td className="py-1 pr-2 font-medium text-gray-600">
+                          Giải nhất:
+                        </td>
+                        <td>{results.first_prize.join(", ")}</td>
+                      </tr>
+                    )}
+                    {/* Thêm các giải khác nếu cần */}
+                  </tbody>
+                </table>
               </div>
             </div>
           </CardContent>
@@ -201,6 +359,17 @@ export function BetDetail({ bet, results }: BetDetailProps) {
             <h4 className="font-medium mb-2">Chi tiết đối soát</h4>
             <div className="space-y-2">
               <div className="flex justify-between">
+                <span className="text-gray-600">Loại cược:</span>
+                <span>
+                  {betType?.name || bet.bet_type}
+                  {bet.bet_variant && ` (${bet.bet_variant})`}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Mệnh giá:</span>
+                <span>{formatCurrency(bet.denomination)}</span>
+              </div>
+              <div className="flex justify-between">
                 <span className="text-gray-600">Số tiền đặt:</span>
                 <span>{formatCurrency(bet.total_amount)}</span>
               </div>
@@ -208,6 +377,52 @@ export function BetDetail({ bet, results }: BetDetailProps) {
                 <span className="text-gray-600">Số tiền thắng:</span>
                 <span>0 ₫</span>
               </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Lỗ:</span>
+                <span className="font-medium text-red-600">
+                  {formatCurrency(bet.total_amount)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 pt-4 border-t">
+            <h4 className="font-medium mb-3">Các số đã đánh</h4>
+            <div className="flex flex-wrap gap-2">
+              {bet.numbers.map((number, index) => (
+                <Badge key={index} variant="outline" className="px-3 py-1">
+                  {number}
+                </Badge>
+              ))}
+            </div>
+          </div>
+
+          {/* Hiển thị kết quả xổ số liên quan */}
+          <div className="mt-4 pt-4 border-t">
+            <h4 className="font-medium mb-2">Kết quả xổ số {province?.name}</h4>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <tbody>
+                  {results.special_prize &&
+                    results.special_prize.length > 0 && (
+                      <tr>
+                        <td className="py-1 pr-2 font-medium text-gray-600">
+                          Giải đặc biệt:
+                        </td>
+                        <td>{results.special_prize.join(", ")}</td>
+                      </tr>
+                    )}
+                  {results.first_prize && results.first_prize.length > 0 && (
+                    <tr>
+                      <td className="py-1 pr-2 font-medium text-gray-600">
+                        Giải nhất:
+                      </td>
+                      <td>{results.first_prize.join(", ")}</td>
+                    </tr>
+                  )}
+                  {/* Thêm các giải khác nếu cần */}
+                </tbody>
+              </table>
             </div>
           </div>
 

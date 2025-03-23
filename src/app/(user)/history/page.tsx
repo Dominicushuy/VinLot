@@ -155,7 +155,11 @@ export default function HistoryPage() {
                   <SelectItem value="all">Tất cả loại cược</SelectItem>
                   {betTypes?.map((type) => (
                     <SelectItem key={type.bet_type_id} value={type.bet_type_id}>
-                      {type.name}
+                      <span className="flex items-center">
+                        <span className="font-medium">{type.bet_type_id}</span>
+                        <span className="mx-1 text-gray-400">-</span>
+                        <span>{type.name}</span>
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>
