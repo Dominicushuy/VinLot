@@ -19,6 +19,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
 import { useRunCrawler } from "@/lib/hooks/use-crawler";
+import { format } from "date-fns";
 
 // Schema validation cho form crawl thủ công
 const manualCrawlSchema = z.object({
@@ -67,10 +68,10 @@ export function ManualCrawler() {
   const onSubmit = async (data: ManualCrawlFormValues) => {
     try {
       setCrawlingStatus({ status: "running" });
-      // const result = await runCrawler.mutateAsync({
-      //   date: format(data.date, "yyyy-MM-dd"),
-      //   regions: data.regions,
-      // });
+      await runCrawler.mutateAsync({
+        date: format(data.date, "yyyy-MM-dd"),
+        regions: data.regions,
+      });
 
       setCrawlingStatus({
         status: "success",

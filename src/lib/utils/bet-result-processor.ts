@@ -142,8 +142,8 @@ function checkDauDuoiResultDetailed(
   }>;
 } {
   let totalWinAmount = 0;
-  let winningNumbers: string[] = [];
-  let details: Array<{
+  const winningNumbers: string[] = [];
+  const details: Array<{
     number: string;
     prize_type: string;
     prize_name: string;
@@ -233,8 +233,8 @@ function checkXiuChuResultDetailed(
   }>;
 } {
   let totalWinAmount = 0;
-  let winningNumbers: string[] = [];
-  let details: Array<{
+  const winningNumbers: string[] = [];
+  const details: Array<{
     number: string;
     prize_type: string;
     prize_name: string;
@@ -324,7 +324,7 @@ function checkBaoLoResultDetailed(
 } {
   let totalWinAmount = 0;
   let winningNumbers: string[] = [];
-  let details: Array<{
+  const details: Array<{
     number: string;
     prize_type: string;
     prize_name: string;
@@ -371,7 +371,7 @@ function checkBaoLoResultDetailed(
   // Thêm tất cả các giải vào mảng
   prizeMapping.forEach((mapping) => {
     if (mapping.array) {
-      mapping.array.forEach((prize) => {
+      mapping.array.forEach((prize: string) => {
         if (prize) {
           allPrizes.push({
             value: prize,
@@ -430,7 +430,7 @@ function checkBao7LoResultDetailed(
 } {
   let totalWinAmount = 0;
   let winningNumbers: string[] = [];
-  let details: Array<{
+  const details: Array<{
     number: string;
     prize_type: string;
     prize_name: string;
@@ -474,7 +474,7 @@ function checkBao7LoResultDetailed(
   // Thêm tất cả các giải đặc biệt vào mảng
   specialPrizeMapping.forEach((mapping) => {
     if (mapping.array) {
-      mapping.array.forEach((prize) => {
+      mapping.array.forEach((prize: string) => {
         if (prize) {
           specialPrizes.push({
             value: prize,
@@ -533,7 +533,7 @@ function checkBao8LoResultDetailed(
 } {
   let totalWinAmount = 0;
   let winningNumbers: string[] = [];
-  let details: Array<{
+  const details: Array<{
     number: string;
     prize_type: string;
     prize_name: string;
@@ -578,7 +578,7 @@ function checkBao8LoResultDetailed(
   // Thêm tất cả các giải đặc biệt vào mảng
   specialPrizeMapping.forEach((mapping) => {
     if (mapping.array) {
-      mapping.array.forEach((prize) => {
+      mapping.array.forEach((prize: string) => {
         if (prize) {
           specialPrizes.push({
             value: prize,
@@ -636,8 +636,8 @@ function checkNhatToResultDetailed(
   }>;
 } {
   let totalWinAmount = 0;
-  let winningNumbers: string[] = [];
-  let details: Array<{
+  const winningNumbers: string[] = [];
+  const details: Array<{
     number: string;
     prize_type: string;
     prize_name: string;
@@ -699,7 +699,12 @@ function checkXienResultDetailed(
 
   // Lấy tất cả các số 2 chữ số từ các lô
   const allLastTwoDigits: string[] = [];
-  const allPrizes: Array<{ value: string; type: string; name: string }> = [];
+  const allPrizes: Array<{
+    value: string;
+    lastTwo: string;
+    type: string;
+    name: string;
+  }> = [];
 
   // Map giải thưởng sang tên và loại
   const prizeMapping = [
@@ -720,7 +725,7 @@ function checkXienResultDetailed(
   // Thêm tất cả các giải vào mảng và lấy 2 số cuối
   prizeMapping.forEach((mapping) => {
     if (mapping.array) {
-      mapping.array.forEach((prize) => {
+      mapping.array.forEach((prize: string) => {
         if (prize) {
           const lastTwo = prize.slice(-2);
           allLastTwoDigits.push(lastTwo);
@@ -815,7 +820,12 @@ function checkDaResultDetailed(
 
   // Lấy tất cả các số 2 chữ số từ các lô
   const allLastTwoDigits: string[] = [];
-  const allPrizes: Array<{ value: string; type: string; name: string }> = [];
+  const allPrizes: Array<{
+    value: string;
+    lastTwo: string;
+    type: string;
+    name: string;
+  }> = [];
 
   // Map giải thưởng sang tên và loại
   const prizeMapping = [
@@ -837,7 +847,7 @@ function checkDaResultDetailed(
   // Thêm tất cả các giải vào mảng và lấy 2 số cuối
   prizeMapping.forEach((mapping) => {
     if (mapping.array) {
-      mapping.array.forEach((prize) => {
+      mapping.array.forEach((prize: string) => {
         if (prize) {
           const lastTwo = prize.slice(-2);
           allLastTwoDigits.push(lastTwo);

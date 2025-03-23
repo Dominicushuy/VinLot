@@ -14,6 +14,16 @@ interface Bet {
   bet_type: string;
   bet_variant?: string;
   denomination: number;
+  winning_details?: {
+    winning_numbers: string[];
+    details: Array<{
+      number: string;
+      prize_type: string;
+      prize_name: string;
+      description: string;
+      win_amount: number;
+    }>;
+  };
   // Thêm các field khác nếu cần
 }
 
@@ -156,17 +166,6 @@ export function BetDetail({ bet, province, betType, results }: BetDetailProps) {
       bet.status === "won" ? determineWinningNumbers(bet, results) : [];
     const winRatio = getWinRatio(betType, bet);
 
-    // Tạo chi tiết giả cho các số trúng (trong môi trường thực tế sẽ có logic phức tạp hơn)
-    const winningDetails = winningNumbers.map((number, index) => ({
-      number,
-      prize: index === 0 ? "Giải đặc biệt" : `Giải ${index + 1}`,
-      description:
-        index === 0
-          ? "2 số cuối trùng giải đặc biệt"
-          : `2 số cuối trùng giải ${index + 1}`,
-      amount: (bet.win_amount || 0) / winningNumbers.length,
-    }));
-
     // Hiển thị cược đã thắng
     if (bet.status === "won") {
       return (
@@ -286,8 +285,6 @@ export function BetDetail({ bet, province, betType, results }: BetDetailProps) {
                 bet={bet}
                 betType={betType}
                 results={results}
-                winningNumbers={winningNumbers}
-                winningDetails={winningDetails}
               />
             </div>
 

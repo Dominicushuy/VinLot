@@ -29,12 +29,6 @@ export function BetReceiptDialog({
 
   if (!betData) return null;
 
-  // Xác định các số trúng (trong môi trường thực tế sẽ cần logic phức tạp hơn)
-  const winningNumbers =
-    betData.bet.status === "won"
-      ? betData.bet.numbers.slice(0, Math.min(3, betData.bet.numbers.length))
-      : [];
-
   const handlePrint = async () => {
     setIsLoading(true);
     try {
@@ -63,7 +57,6 @@ export function BetReceiptDialog({
           province={betData.province}
           betType={betData.betType}
           betVariant={betData.betVariant}
-          winningNumbers={winningNumbers}
         />
 
         <DialogFooter className="no-print gap-2">

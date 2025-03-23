@@ -5,10 +5,10 @@ import { checkBetResult } from "@/lib/utils/bet-result-processor";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: betId } = params;
+    const { id: betId } = await params;
 
     if (!betId) {
       return NextResponse.json(
