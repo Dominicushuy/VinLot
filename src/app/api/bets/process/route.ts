@@ -1,14 +1,7 @@
-// src/app/api/bets/process/route.ts - Cập nhật API xử lý hàng loạt
+// src/app/api/bets/process/route.ts
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase/client";
 import { checkBetResult } from "@/lib/utils/bet-result-processor";
-
-// Định nghĩa interface cho User
-interface User {
-  id: string;
-  balance: number;
-  [key: string]: any; // Cho phép các trường khác nếu cần
-}
 
 export async function POST(request: Request) {
   try {
@@ -92,11 +85,28 @@ export async function POST(request: Request) {
       const betType = betTypes?.find((bt) => bt.bet_type_id === bet.bet_type);
       if (!betType) continue;
 
+      // Parse các trường JSONB từ database nếu cần
+      const betTypeWithParsedFields = {
+        ...betType,
+        region_rules:
+          typeof betType.region_rules === "string"
+            ? JSON.parse(betType.region_rules)
+            : betType.region_rules,
+        variants:
+          typeof betType.variants === "string"
+            ? JSON.parse(betType.variants)
+            : betType.variants,
+        winning_ratio:
+          typeof betType.winning_ratio === "string"
+            ? JSON.parse(betType.winning_ratio)
+            : betType.winning_ratio,
+      };
+
       // Đối soát kết quả
       const { winAmount, winningDetails } = checkBetResult(
         bet,
         provinceResults[0],
-        betType
+        betTypeWithParsedFields
       );
 
       // Cập nhật trạng thái cược
@@ -144,21 +154,15 @@ export async function POST(request: Request) {
 
       // 7. Cập nhật số dư người dùng
       for (const transaction of transactions) {
-        const { data: userData, error: userError } = await supabase
+        const { data: userData } = await supabase
           .from("users")
           .select("balance")
           .eq("id", transaction.user_id)
           .single();
 
-        // Kiểm tra xem user có tồn tại không trước khi truy cập properties
-        if (userError) {
-          console.error(`Error fetching user: ${userError.message}`);
-          continue;
-        }
-
-        // Chắc chắn rằng userData không null
+        // Chắc chắn rằng userData không null trước khi truy cập properties
         if (userData) {
-          const user = userData as User;
+          const user = userData as { balance: number };
 
           await supabase
             .from("users")

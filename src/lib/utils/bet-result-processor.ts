@@ -1,5 +1,4 @@
-// src/lib/utils/bet-result-processor.ts - Cập nhật để trả về chi tiết số trúng
-
+// src/lib/utils/bet-result-processor.ts
 /**
  * Kiểm tra kết quả cược và tính số tiền thắng
  * @param bet Thông tin cược

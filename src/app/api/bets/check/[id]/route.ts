@@ -1,14 +1,14 @@
-// src/app/api/bets/check/[id]/route.ts - Cập nhật để lưu thông tin chi tiết
+// src/app/api/bets/check/[id]/route.ts
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase/client";
 import { checkBetResult } from "@/lib/utils/bet-result-processor";
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id: betId } = await params;
+    const { id: betId } = params;
 
     if (!betId) {
       return NextResponse.json(
@@ -79,11 +79,28 @@ export async function GET(
       );
     }
 
+    // Parse các trường JSONB từ database nếu cần
+    const betTypeWithParsedFields = {
+      ...betType,
+      region_rules:
+        typeof betType.region_rules === "string"
+          ? JSON.parse(betType.region_rules)
+          : betType.region_rules,
+      variants:
+        typeof betType.variants === "string"
+          ? JSON.parse(betType.variants)
+          : betType.variants,
+      winning_ratio:
+        typeof betType.winning_ratio === "string"
+          ? JSON.parse(betType.winning_ratio)
+          : betType.winning_ratio,
+    };
+
     // 6. Đối soát kết quả
     const { winAmount, winningDetails } = checkBetResult(
       bet,
       results[0],
-      betType
+      betTypeWithParsedFields
     );
     const status = winAmount > 0 ? "won" : "lost";
 

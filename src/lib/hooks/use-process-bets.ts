@@ -14,6 +14,7 @@ interface ProcessSingleResult {
   id: string;
   status: "won" | "lost" | "pending";
   win_amount?: number;
+  winning_details?: any;
   newly_processed?: boolean;
   already_processed?: boolean;
   error?: string;
@@ -67,15 +68,8 @@ export function useProcessBets() {
       const processDate = date || new Date().toISOString().split("T")[0];
       setProcessingDate(processDate);
 
-      // Hiển thị toast đang xử lý
-      // const toastId = toast({
-      //   title: "Đang đối soát",
-      //   description: `Đang xử lý tất cả các cược ngày ${processDate}...`,
-      //   duration: 60000, // 1 phút - sẽ được cập nhật khi hoàn thành
-      // });
-
-      // Gọi API để đối soát tất cả
-      const response = await fetch("/api/bets/process", {
+      // Gọi API đối soát tất cả cược đang chờ
+      const response = await fetch("/api/admin/process-all-pending", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

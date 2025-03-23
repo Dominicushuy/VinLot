@@ -3,24 +3,6 @@ import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase/client";
 import { checkBetResult } from "@/lib/utils/bet-result-processor";
 
-// Định nghĩa interface cho kết quả xổ số
-interface LotteryResult {
-  id: string;
-  province_id: string;
-  date: string;
-  day_of_week: string;
-  special_prize: string[];
-  first_prize: string[];
-  second_prize: string[];
-  third_prize: string[];
-  fourth_prize: string[];
-  fifth_prize: string[];
-  sixth_prize: string[];
-  seventh_prize: string[];
-  eighth_prize?: string[];
-  [key: string]: any; // Cho phép các trường khác nếu cần
-}
-
 // Định nghĩa interface cho cược
 interface Bet {
   id: string;
@@ -51,9 +33,12 @@ interface Transaction {
   description: string;
 }
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
-    console.log("Starting process-all-pending");
+    const requestData = await request.json();
+    const date = requestData.date;
+
+    console.log("Starting process-all-pending for date:", date);
 
     // 1. Lấy tất cả các cược đang chờ kết quả (với giới hạn 100 cược một lần để tránh timeout)
     const {
@@ -64,6 +49,7 @@ export async function POST() {
       .from("bets")
       .select("*", { count: "exact" })
       .eq("status", "pending")
+      .eq("draw_date", date)
       .limit(100);
 
     if (betsError) {
@@ -72,50 +58,40 @@ export async function POST() {
     }
 
     console.log(
-      `Found ${count || 0} pending bets, processing ${pendingBets?.length || 0}`
+      `Found ${count || 0} pending bets for date ${date}, processing ${
+        pendingBets?.length || 0
+      }`
     );
 
     if (!pendingBets || pendingBets.length === 0) {
       return NextResponse.json({
-        message: "Không có cược cần đối soát",
+        message: "Không có cược cần đối soát cho ngày này",
         processed: 0,
         won: 0,
       });
     }
 
-    // 2. Lấy tất cả kết quả xổ số (chỉ lấy theo các ngày cần thiết)
-    const drawDates = [...new Set(pendingBets.map((bet) => bet.draw_date))];
-    console.log("Ngày cần lấy kết quả:", drawDates);
+    // 2. Lấy tất cả kết quả xổ số cho ngày cần thiết
+    const { data: results, error: resultsError } = await supabase
+      .from("results")
+      .select("*")
+      .eq("date", date);
 
-    let allResults: LotteryResult[] = [];
-    for (const date of drawDates) {
-      const { data: results, error: resultsError } = await supabase
-        .from("results")
-        .select("*")
-        .eq("date", date);
-
-      if (resultsError) {
-        console.error(`Error fetching results for date ${date}:`, resultsError);
-        continue; // Bỏ qua lỗi và tiếp tục với ngày khác
-      }
-
-      if (results && results.length > 0) {
-        allResults = [...allResults, ...(results as LotteryResult[])];
-      }
+    if (resultsError) {
+      console.error(`Error fetching results for date ${date}:`, resultsError);
+      throw new Error(`Lỗi khi lấy kết quả xổ số: ${resultsError.message}`);
     }
 
-    console.log(
-      `Fetched ${allResults.length} lottery results for ${drawDates.length} dates`
-    );
-
-    if (allResults.length === 0) {
+    if (!results || results.length === 0) {
       return NextResponse.json({
-        message: "Chưa có kết quả xổ số cho các ngày cần đối soát",
+        message: "Chưa có kết quả xổ số cho ngày cần đối soát",
         processed: 0,
         won: 0,
         status: "no_results",
       });
     }
+
+    console.log(`Fetched ${results.length} lottery results for date ${date}`);
 
     // 3. Lấy thông tin loại cược
     const { data: betTypes, error: betTypesError } = await supabase
@@ -143,8 +119,10 @@ export async function POST() {
       id: string;
       status: "won" | "lost";
       win_amount: number;
+      winning_details: any;
     }> = [];
     const transactions: Transaction[] = [];
+    let totalWinAmount = 0;
 
     for (const bet of pendingBets as Bet[]) {
       console.log(
@@ -152,8 +130,8 @@ export async function POST() {
       );
 
       // Tìm kết quả xổ số cho ngày và tỉnh của cược
-      const provinceResults = allResults.filter(
-        (r) => r.province_id === bet.province_id && r.date === bet.draw_date
+      const provinceResults = results.filter(
+        (r) => r.province_id === bet.province_id
       );
 
       if (provinceResults.length === 0) {
@@ -189,11 +167,12 @@ export async function POST() {
               : betType.winning_ratio,
         };
 
-        const winAmount = checkBetResult(
+        const { winAmount, winningDetails } = checkBetResult(
           bet,
           provinceResults[0],
           betTypeWithParsedFields
         );
+
         console.log(`Bet ${bet.id} result: win amount = ${winAmount}`);
 
         // Cập nhật trạng thái cược
@@ -203,6 +182,7 @@ export async function POST() {
           id: bet.id,
           status,
           win_amount: winAmount,
+          winning_details: winningDetails,
         });
 
         console.log(
@@ -211,6 +191,7 @@ export async function POST() {
 
         // Tạo giao dịch nếu thắng
         if (winAmount > 0) {
+          totalWinAmount += winAmount;
           transactions.push({
             user_id: bet.user_id,
             bet_id: bet.id,
@@ -238,6 +219,7 @@ export async function POST() {
           .update({
             status: bet.status,
             win_amount: bet.win_amount,
+            winning_details: bet.winning_details,
             updated_at: new Date().toISOString(),
           })
           .eq("id", bet.id);
@@ -329,6 +311,7 @@ export async function POST() {
       won: transactions.length,
       total: count || pendingBets.length,
       updated: successfulUpdates,
+      totalWinAmount: totalWinAmount,
     });
   } catch (error: any) {
     console.error("Error processing all pending bets:", error);
