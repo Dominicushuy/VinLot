@@ -11,6 +11,8 @@ import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { useDemoMode } from "@/lib/hooks/use-demo-mode";
 
+import "react-day-picker/dist/style.css";
+
 export type EnhancedCalendarProps = React.ComponentProps<typeof DayPicker>;
 
 function EnhancedCalendar({

@@ -87,7 +87,7 @@ export function EnhancedBetForm() {
       denomination: 10000,
       userId: demoUser.id,
     },
-    mode: "onChange", // Validate khi thay đổi giá trị
+    mode: "onChange",
   });
 
   // Watch form values
@@ -110,9 +110,7 @@ export function EnhancedBetForm() {
       id: "region",
       title: "Chọn đài xổ số",
       description: "Chọn miền và đài xổ số",
-      component: (
-        <RegionSelection isMultiRegion={false} setIsMultiRegion={() => {}} />
-      ),
+      component: <RegionSelection />,
       validate: () => provinces.length > 0,
     },
     {
