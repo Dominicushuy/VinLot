@@ -64,6 +64,24 @@ export function BetTypeSelection() {
     return regionRules && regionRules[regionType];
   });
 
+  // Xử lý khi thay đổi loại cược
+  const handleBetTypeChange = (value: string) => {
+    // Đặt loại cược mới
+    methods.setValue("betType", value);
+
+    // Reset danh sách số đã chọn
+    methods.setValue("numbers", []);
+  };
+
+  // Xử lý khi thay đổi biến thể
+  const handleBetVariantChange = (value: string) => {
+    // Đặt biến thể mới
+    methods.setValue("betVariant", value);
+
+    // Reset danh sách số đã chọn
+    methods.setValue("numbers", []);
+  };
+
   // Cập nhật danh sách biến thể khi loại cược thay đổi
   useEffect(() => {
     if (!betType || !betTypes) {
@@ -98,9 +116,6 @@ export function BetTypeSelection() {
     } else if (variants.length === 0) {
       methods.setValue("betVariant", undefined);
     }
-
-    // Reset numbers khi đổi loại cược
-    methods.resetField("numbers");
   }, [betType, betTypes, methods, betVariant]);
 
   // Cập nhật số chữ số khi loại cược hoặc biến thể thay đổi
@@ -224,10 +239,7 @@ export function BetTypeSelection() {
           {isLoading ? (
             <p className="text-sm italic">Đang tải dữ liệu...</p>
           ) : (
-            <Select
-              value={betType}
-              onValueChange={(value) => methods.setValue("betType", value)}
-            >
+            <Select value={betType} onValueChange={handleBetTypeChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Chọn loại cược" />
               </SelectTrigger>
@@ -266,10 +278,7 @@ export function BetTypeSelection() {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Biến thể cược
             </label>
-            <Select
-              value={betVariant}
-              onValueChange={(value) => methods.setValue("betVariant", value)}
-            >
+            <Select value={betVariant} onValueChange={handleBetVariantChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Chọn biến thể" />
               </SelectTrigger>
@@ -362,7 +371,10 @@ export function BetTypeSelection() {
               Chọn số cược ({digitCount} chữ số)
             </Label>
             {numbers.length > 0 && (
-              <Badge variant="outline" className="bg-gray-50">
+              <Badge
+                variant="lottery"
+                className="px-3 py-1 text-sm font-medium animate-pulse"
+              >
                 Đã chọn {numbers.length} số
               </Badge>
             )}

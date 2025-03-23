@@ -38,6 +38,7 @@ export function NumberGrid({
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [activeTab, setActiveTab] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
+  const [prevDigitCount, setPrevDigitCount] = useState(digitCount);
 
   // Generate all possible numbers based on digit count
   const allNumbers = useMemo(() => {
@@ -46,6 +47,16 @@ export function NumberGrid({
       i.toString().padStart(digitCount, "0")
     );
   }, [digitCount]);
+
+  // Reset states when digitCount changes
+  useEffect(() => {
+    if (prevDigitCount !== digitCount) {
+      setSearchTerm("");
+      setActiveTab("all");
+      setCurrentPage(0);
+      setPrevDigitCount(digitCount);
+    }
+  }, [digitCount, prevDigitCount]);
 
   // Filter numbers based on search term
   const filteredNumbers = useMemo(() => {
@@ -359,12 +370,20 @@ export function NumberGrid({
       </div>
 
       {/* Selected numbers overview */}
+      {/* Selected numbers overview */}
       {selectedNumbers.length > 0 && (
-        <div className="bg-gray-50 rounded-md p-3 border">
+        <div className="bg-blue-50 rounded-md p-3 border-2 border-lottery-primary shadow-sm">
           <div className="flex justify-between items-center mb-2">
-            <h3 className="text-sm font-medium">
-              Đã chọn {selectedNumbers.length} số
-              {maxSelections < 1000 && ` (tối đa ${maxSelections})`}
+            <h3 className="text-base font-semibold text-lottery-primary flex items-center">
+              <span className="inline-flex items-center justify-center bg-lottery-primary text-white rounded-full w-6 h-6 mr-2 text-xs">
+                {selectedNumbers.length}
+              </span>
+              Số đã chọn
+              {maxSelections < 1000 && (
+                <span className="ml-1 text-sm font-normal text-gray-600">
+                  (tối đa {maxSelections})
+                </span>
+              )}
             </h3>
             <Button
               type="button"
@@ -376,12 +395,12 @@ export function NumberGrid({
               <Trash2 className="h-3 w-3 mr-1" /> Xóa tất cả
             </Button>
           </div>
-          <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto p-1">
+          <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto p-1 bg-white rounded border border-blue-100">
             {selectedNumbers.map((number) => (
               <Badge
                 key={number}
                 variant="outline"
-                className="bg-white flex items-center"
+                className="bg-white flex items-center hover:bg-gray-50"
               >
                 {number}
                 <button
@@ -478,6 +497,7 @@ export function NumberGrid({
               </div>
               <div className="flex gap-1">
                 <Button
+                  type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => setCurrentPage(0)}
@@ -486,6 +506,7 @@ export function NumberGrid({
                   Đầu
                 </Button>
                 <Button
+                  type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
@@ -497,6 +518,7 @@ export function NumberGrid({
                   {currentPage + 1}/{totalPages}
                 </span>
                 <Button
+                  type="button"
                   variant="outline"
                   size="sm"
                   onClick={() =>
@@ -507,6 +529,7 @@ export function NumberGrid({
                   Sau
                 </Button>
                 <Button
+                  type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => setCurrentPage(totalPages - 1)}
