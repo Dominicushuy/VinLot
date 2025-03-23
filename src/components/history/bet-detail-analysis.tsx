@@ -1,31 +1,25 @@
-// src/components/history/bet-detail-analysis.tsx (Component mới)
+// src/components/history/bet-detail-analysis.tsx - Cập nhật component hiển thị phân tích
+
 import { formatCurrency } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-
-interface WinningDetails {
-  number: string;
-  prize: string;
-  description: string;
-  amount: number;
-}
+import { WinningDetail } from "@/types";
 
 interface BetDetailAnalysisProps {
   bet: any;
   betType: any;
   results: any;
-  winningNumbers: string[];
-  winningDetails?: WinningDetails[];
 }
 
 export function BetDetailAnalysis({
   bet,
   betType,
   results,
-  winningNumbers,
-  winningDetails = [],
 }: BetDetailAnalysisProps) {
   // Nếu không có kết quả hoặc không phải bet thắng
-  if (!results || bet.status !== "won") return null;
+  if (!results || bet.status !== "won" || !bet.winning_details) return null;
+
+  // Lấy thông tin chi tiết từ bet
+  const { winning_numbers, details } = bet.winning_details;
 
   // Tính tỷ lệ thưởng
   let winRatio = "N/A";
@@ -60,10 +54,10 @@ export function BetDetailAnalysis({
               <Badge
                 key={index}
                 variant={
-                  winningNumbers.includes(number) ? "lottery" : "outline"
+                  winning_numbers.includes(number) ? "lottery" : "outline"
                 }
                 className={`px-3 py-1 ${
-                  winningNumbers.includes(number)
+                  winning_numbers.includes(number)
                     ? "ring-2 ring-offset-2 ring-green-100"
                     : ""
                 }`}
@@ -74,7 +68,7 @@ export function BetDetailAnalysis({
           </div>
         </div>
 
-        {winningDetails.length > 0 && (
+        {details && details.length > 0 && (
           <div className="mt-4 border rounded-md overflow-hidden">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 text-gray-700">
@@ -85,7 +79,7 @@ export function BetDetailAnalysis({
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {winningDetails.map((detail, index) => (
+                {details.map((detail: WinningDetail, index: number) => (
                   <tr key={index} className="hover:bg-gray-50">
                     <td className="py-2 px-3">
                       <Badge variant="lottery" className="bg-green-600">
@@ -94,14 +88,14 @@ export function BetDetailAnalysis({
                     </td>
                     <td className="py-2 px-3 text-gray-600">
                       <div>
-                        <div className="font-medium">{detail.prize}</div>
+                        <div className="font-medium">{detail.prize_name}</div>
                         <div className="text-xs text-gray-500">
                           {detail.description}
                         </div>
                       </div>
                     </td>
                     <td className="py-2 px-3 text-right font-medium">
-                      {formatCurrency(detail.amount)}
+                      {formatCurrency(detail.win_amount)}
                     </td>
                   </tr>
                 ))}
@@ -123,7 +117,7 @@ export function BetDetailAnalysis({
             Công thức tính tiền thắng:
           </p>
           <p className="text-sm text-green-600">
-            {winningNumbers.length} số trúng ×{" "}
+            {winning_numbers.length} số trúng ×{" "}
             {formatCurrency(bet.denomination)} ×{` tỷ lệ ${winRatio}`} ={" "}
             {formatCurrency(bet.win_amount || 0)}
           </p>

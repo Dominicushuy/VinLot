@@ -168,3 +168,37 @@ export interface Province {
   is_active: boolean;
   draw_days: string[];
 }
+
+// Định nghĩa chi tiết số trúng và phân tích
+export interface WinningDetail {
+  number: string;
+  prize_type: string;
+  prize_name: string;
+  description: string;
+  win_amount: number;
+}
+
+export interface WinningDetails {
+  winning_numbers: string[];
+  details: WinningDetail[];
+}
+
+// Cập nhật interface Bet
+export interface Bet {
+  id: string;
+  userId: string;
+  betDate: string;
+  drawDate: string;
+  regionType: "M1" | "M2";
+  province: string;
+  betType: string;
+  betVariant?: string;
+  numbers: string[];
+  selectionMethod: string;
+  denomination: number;
+  totalAmount: number;
+  potentialWinAmount: number;
+  status: "pending" | "won" | "lost";
+  winAmount?: number;
+  winningDetails?: WinningDetails; // Thêm field này
+}

@@ -1,4 +1,4 @@
-// src/app/api/bets/check/[id]/route.ts
+// src/app/api/bets/check/[id]/route.ts - Cập nhật để lưu thông tin chi tiết
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase/client";
 import { checkBetResult } from "@/lib/utils/bet-result-processor";
@@ -37,6 +37,7 @@ export async function GET(
         id: bet.id,
         status: bet.status,
         win_amount: bet.win_amount || 0,
+        winning_details: bet.winning_details || null,
         already_processed: true,
       });
     }
@@ -79,17 +80,22 @@ export async function GET(
     }
 
     // 6. Đối soát kết quả
-    const winAmount = checkBetResult(bet, results[0], betType);
+    const { winAmount, winningDetails } = checkBetResult(
+      bet,
+      results[0],
+      betType
+    );
     const status = winAmount > 0 ? "won" : "lost";
 
     // 7. Cập nhật phiếu cược và tạo giao dịch nếu win
     if (status === "won") {
-      // Cập nhật phiếu
+      // Cập nhật phiếu kèm chi tiết trúng thưởng
       await supabase
         .from("bets")
         .update({
           status,
           win_amount: winAmount,
+          winning_details: winningDetails,
           updated_at: new Date().toISOString(),
         })
         .eq("id", bet.id);
@@ -126,6 +132,7 @@ export async function GET(
         .from("bets")
         .update({
           status,
+          winning_details: null,
           updated_at: new Date().toISOString(),
         })
         .eq("id", bet.id);
@@ -136,6 +143,7 @@ export async function GET(
       id: bet.id,
       status: status,
       win_amount: winAmount,
+      winning_details: winningDetails,
       newly_processed: true,
     });
   } catch (error: any) {

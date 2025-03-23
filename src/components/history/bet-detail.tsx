@@ -56,7 +56,12 @@ interface BetDetailProps {
 // Đây là phiên bản đơn giản để xác định các số trúng
 // Trong môi trường thực tế, bạn cần logic phức tạp hơn theo từng loại cược
 function determineWinningNumbers(bet: Bet, results: Result): string[] {
-  // Lấy tất cả các số cuối từ kết quả (đơn giản hóa)
+  // Nếu đã có chi tiết trong database, ưu tiên dùng
+  if (bet.winning_details && bet.winning_details.winning_numbers.length > 0) {
+    return bet.winning_details.winning_numbers;
+  }
+
+  // Nếu không có, sử dụng logic cũ để tương thích ngược
   const lastTwoDigits: string[] = [];
   const allPrizes = [
     ...(results.special_prize || []),

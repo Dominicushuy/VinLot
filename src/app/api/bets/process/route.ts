@@ -1,4 +1,4 @@
-// src/app/api/bets/process/route.ts
+// src/app/api/bets/process/route.ts - Cập nhật API xử lý hàng loạt
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase/client";
 import { checkBetResult } from "@/lib/utils/bet-result-processor";
@@ -8,28 +8,6 @@ interface User {
   id: string;
   balance: number;
   [key: string]: any; // Cho phép các trường khác nếu cần
-}
-
-// Định nghĩa interface cho cược
-interface Bet {
-  id: string;
-  user_id: string;
-  draw_date: string;
-  province_id: string;
-  bet_type: string;
-  bet_variant?: string;
-  status: string;
-  [key: string]: any; // Cho phép các trường khác nếu cần
-}
-
-// Định nghĩa interface cho giao dịch
-interface Transaction {
-  user_id: string;
-  bet_id: string;
-  amount: number;
-  type: string;
-  status: string;
-  description: string;
 }
 
 export async function POST(request: Request) {
@@ -88,10 +66,19 @@ export async function POST(request: Request) {
       id: string;
       status: string;
       win_amount: number;
+      winning_details: any;
     }> = [];
-    const transactions: Transaction[] = [];
+    const transactions: Array<{
+      user_id: string;
+      bet_id: string;
+      amount: number;
+      type: string;
+      status: string;
+      description: string;
+    }> = [];
+    let totalWinAmount = 0;
 
-    for (const bet of pendingBets as Bet[]) {
+    for (const bet of pendingBets as any[]) {
       // Kiểm tra nếu có kết quả xổ số cho tỉnh của cược
       const provinceResults = results.filter(
         (r) => r.province_id === bet.province_id
@@ -106,7 +93,11 @@ export async function POST(request: Request) {
       if (!betType) continue;
 
       // Đối soát kết quả
-      const winAmount = checkBetResult(bet, provinceResults[0], betType);
+      const { winAmount, winningDetails } = checkBetResult(
+        bet,
+        provinceResults[0],
+        betType
+      );
 
       // Cập nhật trạng thái cược
       const status = winAmount > 0 ? "won" : "lost";
@@ -115,10 +106,14 @@ export async function POST(request: Request) {
         id: bet.id,
         status,
         win_amount: winAmount,
+        winning_details: winningDetails,
       });
 
-      // Tạo giao dịch nếu thắng
+      // Tính tổng tiền thắng
       if (winAmount > 0) {
+        totalWinAmount += winAmount;
+
+        // Tạo giao dịch nếu thắng
         transactions.push({
           user_id: bet.user_id,
           bet_id: bet.id,
@@ -137,6 +132,8 @@ export async function POST(request: Request) {
         .update({
           status: bet.status,
           win_amount: bet.win_amount,
+          winning_details: bet.winning_details,
+          updated_at: new Date().toISOString(),
         })
         .eq("id", bet.id);
     }
@@ -167,6 +164,7 @@ export async function POST(request: Request) {
             .from("users")
             .update({
               balance: user.balance + transaction.amount,
+              updated_at: new Date().toISOString(),
             })
             .eq("id", transaction.user_id);
         }
@@ -177,6 +175,8 @@ export async function POST(request: Request) {
       success: true,
       processed: processedBets.length,
       won: transactions.length,
+      totalWinAmount,
+      total: pendingBets.length,
     });
   } catch (error: any) {
     console.error("Lỗi khi đối soát cược:", error);

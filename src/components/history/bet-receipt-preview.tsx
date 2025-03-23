@@ -9,7 +9,6 @@ interface BetReceiptPreviewProps {
   province: any;
   betType: string;
   betVariant?: string;
-  winningNumbers?: string[]; // Thêm thông tin số trúng
 }
 
 export function BetReceiptPreview({
@@ -17,11 +16,16 @@ export function BetReceiptPreview({
   province,
   betType,
   betVariant,
-  winningNumbers = [], // Mặc định không có số trúng
 }: BetReceiptPreviewProps) {
   // Trạng thái cược
   let statusText = "Đang chờ";
   let statusClass = "bg-yellow-100 text-yellow-700";
+
+  // Lấy thông tin chi tiết về số trúng từ cược nếu có
+  const winningNumbers =
+    bet.status === "won" && bet.winning_details
+      ? bet.winning_details.winning_numbers
+      : [];
 
   if (bet.status === "won") {
     statusText = "Đã thắng";
@@ -173,7 +177,7 @@ export function BetReceiptPreview({
             {winningNumbers.length > 0 && (
               <div className="mb-4">
                 <div className="flex flex-wrap gap-2 mb-2">
-                  {winningNumbers.map((number, idx) => (
+                  {winningNumbers.map((number: string, idx: number) => (
                     <Badge key={idx} variant="lottery" className="bg-green-600">
                       {number}
                     </Badge>

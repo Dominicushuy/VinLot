@@ -92,9 +92,13 @@ CREATE TABLE bets (
   potential_win_amount DECIMAL(15, 2) NOT NULL, -- Tiền tiềm năng thắng
   status VARCHAR(20) DEFAULT 'pending',       -- pending, won, lost
   win_amount DECIMAL(15, 2),                  -- Số tiền thắng (nếu có)
+  winning_details JSONB,                      -- Chi tiết số tiền thắng
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Nếu bạn cần cập nhật lại schema
+COMMENT ON COLUMN bets.winning_details IS 'Chi tiết các số trúng và phân tích trúng thưởng dạng JSONB';
 
 CREATE INDEX idx_bets_user_id ON bets(user_id);
 CREATE INDEX idx_bets_draw_date ON bets(draw_date);
