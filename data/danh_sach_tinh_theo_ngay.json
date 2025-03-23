@@ -2,7 +2,7 @@
   "metadata": {
     "version": "1.0",
     "nguon": "https://www.minhngoc.net.vn/ket-qua-xo-so",
-    "ngayLayDuLieu": "2025-03-22T03:59:42.181Z",
+    "ngayLayDuLieu": "2025-03-23T08:46:10.984Z",
     "tongSoMien": 3,
     "tongSoNgay": 7
   },
@@ -263,7 +263,7 @@
       "mien-bac": [
         {
           "tinh": "Nam Định",
-          "ngay": "2025-03-15",
+          "ngay": "2025-03-22",
           "thu": "Thứ bảy",
           "mien": "mien-bac"
         }
@@ -272,21 +272,21 @@
         {
           "tinh": "Đà Nẵng",
           "maTinh": "XSDNG",
-          "ngay": "2025-03-15",
+          "ngay": "2025-03-22",
           "thu": "Thứ bảy",
           "mien": "mien-trung"
         },
         {
           "tinh": "Quảng Ngãi",
           "maTinh": "XSQNG",
-          "ngay": "2025-03-15",
+          "ngay": "2025-03-22",
           "thu": "Thứ bảy",
           "mien": "mien-trung"
         },
         {
           "tinh": "Đắk Nông",
           "maTinh": "XSDNO",
-          "ngay": "2025-03-15",
+          "ngay": "2025-03-22",
           "thu": "Thứ bảy",
           "mien": "mien-trung"
         }
@@ -294,29 +294,29 @@
       "mien-nam": [
         {
           "tinh": "TP. HCM",
-          "maTinh": "XSHCM - 3C7",
-          "ngay": "2025-03-15",
+          "maTinh": "XSHCM - 3D7",
+          "ngay": "2025-03-22",
           "thu": "Thứ bảy",
           "mien": "mien-nam"
         },
         {
           "tinh": "Long An",
-          "maTinh": "XSLA - 3K3",
-          "ngay": "2025-03-15",
+          "maTinh": "XSLA - 3K4",
+          "ngay": "2025-03-22",
           "thu": "Thứ bảy",
           "mien": "mien-nam"
         },
         {
           "tinh": "Bình Phước",
-          "maTinh": "XSBP - 3K3-N25",
-          "ngay": "2025-03-15",
+          "maTinh": "XSBP - 3K4-N25",
+          "ngay": "2025-03-22",
           "thu": "Thứ bảy",
           "mien": "mien-nam"
         },
         {
           "tinh": "Hậu Giang",
-          "maTinh": "XSHG - K3T3",
-          "ngay": "2025-03-15",
+          "maTinh": "XSHG - K4T3",
+          "ngay": "2025-03-22",
           "thu": "Thứ bảy",
           "mien": "mien-nam"
         }
