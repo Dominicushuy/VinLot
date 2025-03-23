@@ -175,16 +175,21 @@ export function BetProvider({ children }: { children: React.ReactNode }) {
 
   // Calculate bet amounts when relevant values change
   useEffect(() => {
-    const { betType, betVariant, denomination, numbers, provinces } =
-      formValues;
+    const {
+      betType,
+      betVariant,
+      regionType,
+      denomination,
+      numbers,
+      provinces,
+    } = formValues;
 
     // Skip calculation if essential data is missing
     if (
       !betType ||
       !numbers?.length ||
       !provinces?.length ||
-      !betTypes ||
-      !provincesByRegion
+      !betTypes?.length
     ) {
       setTotalAmount(0);
       setPotentialWin(0);
@@ -213,95 +218,81 @@ export function BetProvider({ children }: { children: React.ReactNode }) {
           ? JSON.parse(currentBetTypeData.winning_ratio)
           : currentBetTypeData.winning_ratio;
 
-      // Collect all provinces into a single array - FIX THE TYPE ERROR
-      const allProvinces: Province[] = [];
-
-      // Safely iterate through the provinces object and add to our array
-      Object.keys(provincesByRegion).forEach((region) => {
-        const regionProvinces = (
-          provincesByRegion as unknown as Record<string, Province[]>
-        )[region];
-        if (Array.isArray(regionProvinces)) {
-          regionProvinces.forEach((province) => {
-            allProvinces.push(province);
-          });
-        }
-      });
-
-      const provincesByRegionType: Record<string, number> = { M1: 0, M2: 0 };
-      provinces.forEach((provinceId) => {
-        const province = allProvinces.find((p) => p.province_id === provinceId);
-        if (province) {
-          provincesByRegionType[province.region_type] =
-            (provincesByRegionType[province.region_type] || 0) + 1;
-        }
-      });
-
-      // Calculate total bet amount and potential win for each region type
+      // Calculate directly based on the selected regions
       let totalBetAmount = 0;
       let totalPotentialWin = 0;
 
-      for (const [regionTypeKey, count] of Object.entries(
-        provincesByRegionType
-      )) {
-        if (count > 0 && regionRules[regionTypeKey]) {
-          // Create lottery data for calculations
-          const lotteryData = {
-            betTypes: [
-              {
-                id: betType,
-                name: currentBetTypeData.name,
-                description: currentBetTypeData.description,
-                digitCount: currentBetTypeData.digit_count,
-                variants:
-                  typeof currentBetTypeData.variants === "string"
-                    ? JSON.parse(currentBetTypeData.variants)
-                    : currentBetTypeData.variants || [],
-                regions: [
-                  {
-                    id: regionTypeKey,
-                    name:
-                      regionTypeKey === "M1" ? "Miền Nam/Trung" : "Miền Bắc",
-                    betMultipliers: regionRules[regionTypeKey].betMultipliers,
-                    combinationCount:
-                      regionRules[regionTypeKey].combinationCount,
-                    winningRules: regionRules[regionTypeKey].winningRules,
-                  },
-                ],
-                winningRatio: winningRatio,
-              },
-            ],
-            numberSelectionMethods: [],
-          };
+      // Handle each province separately
+      for (const provinceId of provinces) {
+        // Since we need to support both M1 and M2 regions
+        const provinceData = Array.isArray(provincesByRegion)
+          ? provincesByRegion.find((p) => p.province_id === provinceId)
+          : null;
 
-          // Calculate for this region type
-          const betAmount =
-            calculateBetAmount(
-              betType,
-              betVariant,
-              regionTypeKey as "M1" | "M2",
-              denomination,
-              numbers.length,
-              lotteryData
-            ) * count;
+        const provinceRegionType = provinceData?.region_type || regionType;
 
-          const winAmount =
-            calculatePotentialWinAmount(
-              betType,
-              betVariant,
-              denomination,
-              lotteryData
-            ) *
-            numbers.length *
-            count;
+        // Skip if region type is not supported by this bet type
+        if (!regionRules[provinceRegionType]) continue;
 
-          totalBetAmount += betAmount;
-          totalPotentialWin += winAmount;
-        }
+        // Create lottery data for calculations
+        const lotteryData = {
+          betTypes: [
+            {
+              id: betType,
+              name: currentBetTypeData.name,
+              description: currentBetTypeData.description,
+              digitCount: currentBetTypeData.digit_count,
+              variants:
+                typeof currentBetTypeData.variants === "string"
+                  ? JSON.parse(currentBetTypeData.variants)
+                  : currentBetTypeData.variants || [],
+              regions: [
+                {
+                  id: provinceRegionType,
+                  name:
+                    provinceRegionType === "M1" ? "Miền Nam/Trung" : "Miền Bắc",
+                  betMultipliers:
+                    regionRules[provinceRegionType].betMultipliers,
+                  combinationCount:
+                    regionRules[provinceRegionType].combinationCount,
+                  winningRules: regionRules[provinceRegionType].winningRules,
+                },
+              ],
+              winningRatio: winningRatio,
+            },
+          ],
+          numberSelectionMethods: [],
+        };
+
+        // Calculate for this province
+        const betAmount = calculateBetAmount(
+          betType,
+          betVariant,
+          provinceRegionType,
+          denomination,
+          numbers.length,
+          lotteryData
+        );
+
+        const winAmount =
+          calculatePotentialWinAmount(
+            betType,
+            betVariant,
+            denomination,
+            lotteryData
+          ) * numbers.length;
+
+        totalBetAmount += betAmount;
+        totalPotentialWin += winAmount;
       }
 
+      // Set the calculated values
       setTotalAmount(totalBetAmount);
       setPotentialWin(totalPotentialWin);
+
+      // Log for debugging
+      console.log("Calculated bet amount:", totalBetAmount);
+      console.log("Calculated potential win:", totalPotentialWin);
     } catch (error) {
       console.error("Error calculating bet amounts:", error);
       setTotalAmount(0);
