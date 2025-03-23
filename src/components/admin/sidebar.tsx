@@ -124,7 +124,7 @@ export function AdminSidebar() {
           ))}
         </ul>
 
-        <div className="px-4 py-2 mt-6 text-xs uppercase font-semibold text-gray-400">
+        {/* <div className="px-4 py-2 mt-6 text-xs uppercase font-semibold text-gray-400">
           Cài đặt & Báo cáo
         </div>
         <ul>
@@ -145,7 +145,7 @@ export function AdminSidebar() {
               </Link>
             </li>
           ))}
-        </ul>
+        </ul> */}
       </nav>
 
       <div className="absolute bottom-0 w-full p-4 border-t border-gray-800">

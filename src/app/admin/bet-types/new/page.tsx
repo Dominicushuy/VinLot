@@ -20,6 +20,8 @@ import { BetTypeVariantsEditor } from "@/components/admin/bet-type-variants-edit
 import { BetTypeRegionRulesEditor } from "@/components/admin/bet-type-region-rules-editor";
 import { BetTypeWinningRatioEditor } from "@/components/admin/bet-type-winning-ratio-editor";
 import { useCreateBetType } from "@/lib/hooks/use-bet-types";
+import { ArrowLeft, Loader2, PlusCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function NewBetTypePage() {
   const router = useRouter();
@@ -72,10 +74,24 @@ export default function NewBetTypePage() {
     }
   };
 
+  const betTypeIdValue = form.watch("bet_type_id");
+  const nameValue = form.watch("name");
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Thêm loại cược mới</h1>
+        <div className="flex items-center space-x-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push("/admin/bet-types")}
+            className="flex items-center"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Quay lại
+          </Button>
+          <h1 className="text-2xl md:text-3xl font-bold">Thêm loại cược mới</h1>
+        </div>
         <div className="space-x-2">
           <Button
             variant="outline"
@@ -84,34 +100,71 @@ export default function NewBetTypePage() {
             Hủy
           </Button>
           <Button
-            variant="lottery"
+            variant="default"
             onClick={form.handleSubmit(onSubmit)}
             disabled={createBetType.isPending}
+            className="bg-green-600 hover:bg-green-700"
           >
-            {createBetType.isPending ? "Đang lưu..." : "Tạo loại cược"}
+            {createBetType.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Đang tạo...
+              </>
+            ) : (
+              <>
+                <PlusCircle className="h-4 w-4 mr-2" />
+                Tạo loại cược
+              </>
+            )}
           </Button>
         </div>
       </div>
 
+      <Alert className="mb-6 bg-blue-50 border-blue-200">
+        <AlertTitle className="text-blue-800">
+          Hướng dẫn tạo loại cược mới
+        </AlertTitle>
+        <AlertDescription className="text-blue-700">
+          Điền thông tin cơ bản ở tab &quot;Thông tin chung&quot;, sau đó chuyển
+          sang các tab khác để thiết lập biến thể, quy tắc theo miền và tỷ lệ
+          thưởng. Mỗi loại cược cần có ít nhất một tỷ lệ thưởng.
+        </AlertDescription>
+      </Alert>
+
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6">
-            <TabsTrigger value="general">Thông tin chung</TabsTrigger>
-            <TabsTrigger value="variants">Biến thể cược</TabsTrigger>
-            <TabsTrigger value="regions">Quy tắc theo miền</TabsTrigger>
-            <TabsTrigger value="winning_ratio">Tỷ lệ thưởng</TabsTrigger>
+          <TabsList className="grid grid-cols-4 mb-6">
+            <TabsTrigger value="general" className="text-base">
+              Thông tin chung
+            </TabsTrigger>
+            <TabsTrigger value="variants" className="text-base">
+              Biến thể cược
+            </TabsTrigger>
+            <TabsTrigger value="regions" className="text-base">
+              Quy tắc theo miền
+            </TabsTrigger>
+            <TabsTrigger value="winning_ratio" className="text-base">
+              Tỷ lệ thưởng
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="general">
             <Card>
-              <CardHeader>
+              <CardHeader className="bg-gray-50 border-b">
                 <CardTitle>Thông tin cơ bản</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <CardContent className="pt-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="bet_type_id">ID loại cược</Label>
-                    <Input id="bet_type_id" {...form.register("bet_type_id")} />
+                    <Label htmlFor="bet_type_id" className="font-medium">
+                      ID loại cược <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="bet_type_id"
+                      {...form.register("bet_type_id")}
+                      placeholder="dd, xc, b2..."
+                      className="font-mono"
+                    />
                     {form.formState.errors.bet_type_id && (
                       <p className="text-red-500 text-sm">
                         {form.formState.errors.bet_type_id.message}
@@ -124,8 +177,14 @@ export default function NewBetTypePage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="name">Tên loại cược</Label>
-                    <Input id="name" {...form.register("name")} />
+                    <Label htmlFor="name" className="font-medium">
+                      Tên loại cược <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="name"
+                      {...form.register("name")}
+                      placeholder="Đầu Đuôi, Xỉu Chủ..."
+                    />
                     {form.formState.errors.name && (
                       <p className="text-red-500 text-sm">
                         {form.formState.errors.name.message}
@@ -137,9 +196,11 @@ export default function NewBetTypePage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                   <div className="space-y-2">
-                    <Label htmlFor="digit_count">Số chữ số</Label>
+                    <Label htmlFor="digit_count" className="font-medium">
+                      Số chữ số
+                    </Label>
                     <Input
                       id="digit_count"
                       type="number"
@@ -163,15 +224,24 @@ export default function NewBetTypePage() {
                         form.setValue("is_active", checked)
                       }
                     />
-                    <Label htmlFor="is_active">Kích hoạt</Label>
-                    <p className="text-sm text-gray-500 ml-2">
-                      Loại cược này sẽ hiển thị trên form đặt cược
-                    </p>
+                    <div>
+                      <Label
+                        htmlFor="is_active"
+                        className="mb-1 block font-medium"
+                      >
+                        Kích hoạt
+                      </Label>
+                      <p className="text-sm text-gray-500">
+                        Loại cược này sẽ hiển thị trên form đặt cược
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="description">Mô tả</Label>
+                <div className="space-y-2 mt-6">
+                  <Label htmlFor="description" className="font-medium">
+                    Mô tả
+                  </Label>
                   <Textarea
                     id="description"
                     {...form.register("description")}
@@ -191,6 +261,46 @@ export default function NewBetTypePage() {
               value={form.watch("variants")}
               onChange={(variants) => form.setValue("variants", variants)}
             />
+
+            {betTypeIdValue &&
+              (betTypeIdValue === "dd" || betTypeIdValue === "xc") &&
+              form.watch("variants").length === 0 && (
+                <Alert className="mt-4 bg-amber-50 border-amber-200">
+                  <AlertTitle className="text-amber-800">
+                    Gợi ý cho loại cược {nameValue || betTypeIdValue}
+                  </AlertTitle>
+                  <AlertDescription className="text-amber-700">
+                    {betTypeIdValue === "dd" ? (
+                      <>
+                        Loại cược Đầu Đuôi thường có các biến thể:
+                        &quot;dd&quot; (đầu đuôi), &quot;dau&quot; (chỉ đầu),
+                        &quot;duoi&quot; (chỉ đuôi).
+                      </>
+                    ) : (
+                      <>
+                        Loại cược Xỉu Chủ thường có các biến thể: &quot;xc&quot;
+                        (xỉu chủ), &quot;dau&quot; (chỉ đầu), &quot;duoi&quot;
+                        (chỉ đuôi).
+                      </>
+                    )}
+                  </AlertDescription>
+                </Alert>
+              )}
+
+            {betTypeIdValue &&
+              betTypeIdValue === "bao_lo" &&
+              form.watch("variants").length === 0 && (
+                <Alert className="mt-4 bg-amber-50 border-amber-200">
+                  <AlertTitle className="text-amber-800">
+                    Gợi ý cho loại cược Bao Lô
+                  </AlertTitle>
+                  <AlertDescription className="text-amber-700">
+                    Loại cược Bao Lô thường có các biến thể: &quot;b2&quot; (bao
+                    lô 2), &quot;b3&quot; (bao lô 3), &quot;b4&quot; (bao lô 4)
+                    tương ứng với số chữ số.
+                  </AlertDescription>
+                </Alert>
+              )}
           </TabsContent>
 
           <TabsContent value="regions">
@@ -209,8 +319,50 @@ export default function NewBetTypePage() {
               variants={form.watch("variants")}
               betTypeId={form.watch("bet_type_id")}
             />
+
+            {betTypeIdValue && betTypeIdValue === "da" && (
+              <Alert className="mt-4 bg-amber-50 border-amber-200">
+                <AlertTitle className="text-amber-800">
+                  Gợi ý cho tỷ lệ thưởng loại cược Đá
+                </AlertTitle>
+                <AlertDescription className="text-amber-700">
+                  Loại cược Đá có tỷ lệ thưởng phức tạp với nhiều trường hợp.
+                  Chuyển sang chế độ &quot;Phức tạp&quot; và thiết lập cho từng
+                  biến thể (da2, da3, da4, da5) với các điều kiện như
+                  &quot;2_numbers&quot;, &quot;3_numbers&quot;,
+                  &quot;3_numbers_1_number_2_times&quot;, v.v.
+                </AlertDescription>
+              </Alert>
+            )}
           </TabsContent>
         </Tabs>
+
+        <div className="flex justify-end mt-6 space-x-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.push("/admin/bet-types")}
+          >
+            Hủy
+          </Button>
+          <Button
+            type="submit"
+            disabled={createBetType.isPending}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            {createBetType.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Đang tạo...
+              </>
+            ) : (
+              <>
+                <PlusCircle className="h-4 w-4 mr-2" />
+                Tạo loại cược
+              </>
+            )}
+          </Button>
+        </div>
       </form>
     </div>
   );

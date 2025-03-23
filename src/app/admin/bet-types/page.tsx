@@ -29,6 +29,16 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { BetTypesImportExport } from "@/components/admin/bet-types-import-export";
 import { toast } from "@/components/ui/use-toast";
+import { Badge } from "@/components/ui/badge";
+import {
+  Edit,
+  Search,
+  ChevronRight,
+  ChevronLeft,
+  Loader2,
+  Info,
+  AlertTriangle,
+} from "lucide-react";
 
 export default function BetTypesPage() {
   const [search, setSearch] = useState("");
@@ -79,40 +89,61 @@ export default function BetTypesPage() {
   );
 
   const handleToggleStatus = async (id: string, currentStatus: boolean) => {
-    await toggleStatus.mutateAsync({
-      id,
-      isActive: !currentStatus,
-    });
+    try {
+      await toggleStatus.mutateAsync({
+        id,
+        isActive: !currentStatus,
+      });
+
+      toast({
+        title: `Loại cược đã ${!currentStatus ? "kích hoạt" : "vô hiệu hóa"}`,
+        description: `Trạng thái đã được cập nhật thành công.`,
+      });
+    } catch {
+      toast({
+        title: "Lỗi cập nhật trạng thái",
+        description:
+          "Không thể thay đổi trạng thái loại cược. Vui lòng thử lại.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Quản lý loại cược</h1>
-        <Button variant="lottery">
-          <Link href="/admin/bet-types/new">Thêm loại cược mới</Link>
+        <h1 className="text-2xl md:text-3xl font-bold">Quản lý loại cược</h1>
+        <Button variant="default" className="bg-green-600 hover:bg-green-700">
+          <Link href="/admin/bet-types/new" className="flex items-center">
+            <span className="mr-2">+</span> Thêm loại cược mới
+          </Link>
         </Button>
       </div>
 
       <BetTypesImportExport onImport={handleBulkImport} />
 
       <Card className="mb-6">
-        <CardHeader>
+        <CardHeader className="pb-3">
           <CardTitle>Bộ lọc</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
+            <div className="flex-1 relative">
               <Input
                 placeholder="Tìm kiếm theo tên hoặc ID"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                className="pl-10"
               />
+              <Search className="h-4 w-4 absolute left-3 top-3 text-gray-400" />
             </div>
             <div className="w-full md:w-48">
               <Select
                 value={regionFilter}
-                onValueChange={(value) => setRegionFilter(value)}
+                onValueChange={(value) => {
+                  setRegionFilter(value);
+                  setCurrentPage(1); // Reset to first page when filter changes
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Miền" />
@@ -131,104 +162,172 @@ export default function BetTypesPage() {
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="flex justify-center items-center h-40">
-              <p>Đang tải dữ liệu...</p>
+            <div className="flex justify-center items-center h-60">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-500 mr-2" />
+              <p className="text-lg">Đang tải dữ liệu...</p>
             </div>
           ) : isError ? (
-            <div className="flex justify-center items-center h-40">
-              <p className="text-red-500">
-                Đã có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại!
+            <div className="flex flex-col justify-center items-center h-60">
+              <AlertTriangle className="h-12 w-12 text-red-500 mb-4" />
+              <p className="text-lg text-red-600 font-medium mb-2">
+                Đã có lỗi xảy ra khi tải dữ liệu
+              </p>
+              <p className="text-gray-500">
+                Vui lòng làm mới trang hoặc thử lại sau
               </p>
             </div>
           ) : filteredBetTypes.length === 0 ? (
-            <div className="flex justify-center items-center h-40">
-              <p>Không tìm thấy loại cược nào.</p>
+            <div className="flex flex-col justify-center items-center h-60">
+              <Info className="h-12 w-12 text-blue-500 mb-4" />
+              <p className="text-lg font-medium mb-2">
+                Không tìm thấy loại cược nào
+              </p>
+              <p className="text-gray-500 mb-6">
+                {search
+                  ? `Không có kết quả cho "${search}". Vui lòng thử với từ khóa khác.`
+                  : "Không có loại cược nào trong hệ thống."}
+              </p>
+              <Button asChild className="bg-green-600 hover:bg-green-700">
+                <Link href="/admin/bet-types/new">+ Thêm loại cược mới</Link>
+              </Button>
             </div>
           ) : (
             <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[100px]">ID</TableHead>
-                    <TableHead>Tên loại cược</TableHead>
-                    <TableHead>Miền</TableHead>
-                    <TableHead>Biến thể</TableHead>
-                    <TableHead>Tỷ lệ thưởng</TableHead>
-                    <TableHead className="w-[100px] text-center">
-                      Trạng thái
-                    </TableHead>
-                    <TableHead className="text-right">Thao tác</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedBetTypes.map((betType) => (
-                    <TableRow key={betType.id}>
-                      <TableCell className="font-medium">
-                        {betType.bet_type_id}
-                      </TableCell>
-                      <TableCell>{betType.name}</TableCell>
-                      <TableCell>
-                        {Object.keys(betType.region_rules).map((region) => (
-                          <span
-                            key={region}
-                            className="inline-block bg-gray-100 rounded px-2 py-1 text-xs mr-1"
-                          >
-                            {region}
-                          </span>
-                        ))}
-                      </TableCell>
-                      <TableCell>
-                        {betType.variants ? (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-50 hover:bg-gray-50">
+                      <TableHead className="w-[80px] font-semibold">
+                        ID
+                      </TableHead>
+                      <TableHead className="font-semibold">
+                        Tên loại cược
+                      </TableHead>
+                      <TableHead className="font-semibold">Miền</TableHead>
+                      <TableHead className="font-semibold">Biến thể</TableHead>
+                      <TableHead className="font-semibold">
+                        Tỷ lệ thưởng
+                      </TableHead>
+                      <TableHead className="w-[100px] text-center font-semibold">
+                        Trạng thái
+                      </TableHead>
+                      <TableHead className="text-right w-[100px] font-semibold">
+                        Thao tác
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedBetTypes.map((betType) => (
+                      <TableRow key={betType.id} className="hover:bg-gray-50">
+                        <TableCell className="font-medium text-blue-600">
+                          {betType.bet_type_id}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {betType.name}
+                        </TableCell>
+                        <TableCell>
                           <div className="flex flex-wrap gap-1">
-                            {betType.variants.map((variant: any) => (
-                              <span
-                                key={variant.id}
+                            {Object.keys(betType.region_rules).map((region) => (
+                              <Badge
+                                key={region}
+                                variant="outline"
                                 className={cn(
-                                  "inline-block rounded px-2 py-1 text-xs",
-                                  variant.is_active !== false
-                                    ? "bg-green-100 text-green-800"
-                                    : "bg-gray-100 text-gray-500"
+                                  "bg-gray-100/70 hover:bg-gray-100 text-gray-800",
+                                  region === "M1" &&
+                                    "bg-blue-100/70 hover:bg-blue-100 text-blue-800 border-blue-200",
+                                  region === "M2" &&
+                                    "bg-green-100/70 hover:bg-green-100 text-green-800 border-green-200"
                                 )}
                               >
-                                {variant.name}
-                              </span>
+                                {region}
+                              </Badge>
                             ))}
                           </div>
-                        ) : (
-                          "Không có"
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {typeof betType.winning_ratio === "number"
-                          ? `1:${betType.winning_ratio}`
-                          : "Nhiều tỷ lệ"}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Switch
-                          checked={betType.is_active !== false}
-                          onCheckedChange={() =>
-                            handleToggleStatus(
-                              betType.id,
-                              betType.is_active !== false
-                            )
-                          }
-                        />
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button asChild variant="outline" size="sm">
-                          <Link href={`/admin/bet-types/${betType.id}`}>
-                            Chỉnh sửa
-                          </Link>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                        </TableCell>
+                        <TableCell>
+                          {betType.variants ? (
+                            <div className="flex flex-wrap gap-1">
+                              {betType.variants
+                                .slice(0, 3)
+                                .map((variant: any) => (
+                                  <Badge
+                                    key={variant.id}
+                                    variant="outline"
+                                    className={cn(
+                                      "transition-colors",
+                                      variant.is_active !== false
+                                        ? "bg-purple-100/70 hover:bg-purple-100 text-purple-800 border-purple-200"
+                                        : "bg-gray-100 text-gray-500 border-gray-200"
+                                    )}
+                                  >
+                                    {variant.name}
+                                  </Badge>
+                                ))}
+                              {betType.variants.length > 3 && (
+                                <Badge
+                                  variant="outline"
+                                  className="bg-gray-100 text-gray-600 border-gray-200"
+                                >
+                                  +{betType.variants.length - 3}
+                                </Badge>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-gray-500 text-sm italic">
+                              Không có
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {typeof betType.winning_ratio === "number" ? (
+                            <Badge className="bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100">
+                              1:{betType.winning_ratio}
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100">
+                              Nhiều tỷ lệ
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex justify-center">
+                            <Switch
+                              checked={betType.is_active !== false}
+                              onCheckedChange={() =>
+                                handleToggleStatus(
+                                  betType.id,
+                                  betType.is_active !== false
+                                )
+                              }
+                            />
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            asChild
+                            variant="ghost"
+                            size="sm"
+                            className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                          >
+                            <Link href={`/admin/bet-types/${betType.id}`}>
+                              <Edit className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex justify-center items-center p-4">
+                <div className="flex justify-between items-center px-4 py-4 border-t">
+                  <div className="text-sm text-gray-500">
+                    Hiển thị {(currentPage - 1) * pageSize + 1}-
+                    {Math.min(currentPage * pageSize, filteredBetTypes.length)}{" "}
+                    trong số {filteredBetTypes.length} loại cược
+                  </div>
                   <div className="flex space-x-2">
                     <Button
                       variant="outline"
@@ -237,19 +336,112 @@ export default function BetTypesPage() {
                         setCurrentPage((prev) => Math.max(prev - 1, 1))
                       }
                       disabled={currentPage === 1}
+                      className="flex items-center"
                     >
+                      <ChevronLeft className="h-4 w-4 mr-1" />
                       Trước
                     </Button>
-                    {Array.from({ length: totalPages }).map((_, i) => (
-                      <Button
-                        key={i}
-                        variant={i + 1 === currentPage ? "lottery" : "outline"}
-                        size="sm"
-                        onClick={() => setCurrentPage(i + 1)}
-                      >
-                        {i + 1}
-                      </Button>
-                    ))}
+
+                    {totalPages <= 5 ? (
+                      // If 5 or fewer pages, show all
+                      Array.from({ length: totalPages }).map((_, i) => (
+                        <Button
+                          key={i}
+                          variant={
+                            i + 1 === currentPage ? "default" : "outline"
+                          }
+                          size="sm"
+                          onClick={() => setCurrentPage(i + 1)}
+                          className={
+                            i + 1 === currentPage
+                              ? "bg-blue-600 hover:bg-blue-700"
+                              : ""
+                          }
+                        >
+                          {i + 1}
+                        </Button>
+                      ))
+                    ) : (
+                      // If more than 5 pages, show current +/- 1 and first/last
+                      <>
+                        {/* First page */}
+                        <Button
+                          variant={currentPage === 1 ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(1)}
+                          className={
+                            currentPage === 1
+                              ? "bg-blue-600 hover:bg-blue-700"
+                              : ""
+                          }
+                        >
+                          1
+                        </Button>
+
+                        {/* Ellipsis if needed */}
+                        {currentPage > 3 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled
+                            className="cursor-default"
+                          >
+                            ...
+                          </Button>
+                        )}
+
+                        {/* Pages around current */}
+                        {Array.from({ length: 3 })
+                          .map((_, i) => currentPage - 1 + i)
+                          .filter((page) => page > 1 && page < totalPages)
+                          .map((page) => (
+                            <Button
+                              key={page}
+                              variant={
+                                page === currentPage ? "default" : "outline"
+                              }
+                              size="sm"
+                              onClick={() => setCurrentPage(page)}
+                              className={
+                                page === currentPage
+                                  ? "bg-blue-600 hover:bg-blue-700"
+                                  : ""
+                              }
+                            >
+                              {page}
+                            </Button>
+                          ))}
+
+                        {/* Ellipsis if needed */}
+                        {currentPage < totalPages - 2 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled
+                            className="cursor-default"
+                          >
+                            ...
+                          </Button>
+                        )}
+
+                        {/* Last page */}
+                        <Button
+                          variant={
+                            currentPage === totalPages ? "default" : "outline"
+                          }
+                          size="sm"
+                          onClick={() => setCurrentPage(totalPages)}
+                          className={
+                            currentPage === totalPages
+                              ? "bg-blue-600 hover:bg-blue-700"
+                              : ""
+                          }
+                        >
+                          {totalPages}
+                        </Button>
+                      </>
+                    )}
+
                     <Button
                       variant="outline"
                       size="sm"
@@ -257,8 +449,10 @@ export default function BetTypesPage() {
                         setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                       }
                       disabled={currentPage === totalPages}
+                      className="flex items-center"
                     >
                       Sau
+                      <ChevronRight className="h-4 w-4 ml-1" />
                     </Button>
                   </div>
                 </div>

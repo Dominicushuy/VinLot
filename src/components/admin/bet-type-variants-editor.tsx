@@ -28,6 +28,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { AlertTriangle, Edit, Plus, Trash2 } from "lucide-react";
 
 interface BetTypeVariantsEditorProps {
   value: any[];
@@ -111,6 +112,16 @@ export function BetTypeVariantsEditor({
       });
     } else {
       // Add new variant
+      // Check for duplicate IDs
+      if (value.some((v) => v.id === data.id)) {
+        toast({
+          title: "ID đã tồn tại",
+          description: "Biến thể với ID này đã tồn tại, vui lòng chọn ID khác.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       onChange([...value, data]);
       toast({
         title: "Đã thêm biến thể",
@@ -123,69 +134,107 @@ export function BetTypeVariantsEditor({
   return (
     <>
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="bg-purple-50 border-b flex flex-row items-center justify-between">
           <CardTitle>Biến thể cược</CardTitle>
-          <Button variant="lottery" onClick={handleAddNew}>
+          <Button
+            variant="default"
+            size="sm"
+            onClick={handleAddNew}
+            className="bg-purple-600 hover:bg-purple-700"
+          >
+            <Plus className="h-4 w-4 mr-2" />
             Thêm biến thể
           </Button>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {value.length === 0 ? (
-            <div className="text-center py-6 text-gray-500">
-              Chưa có biến thể nào được thêm. Nhấn &quot;Thêm biến thể&quot; để
-              bắt đầu.
+            <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
+              <AlertTriangle className="h-12 w-12 text-amber-500 mb-4" />
+              <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                Chưa có biến thể nào
+              </h3>
+              <p className="text-gray-500 mb-6 max-w-md">
+                Biến thể giúp phân loại các cách cược khác nhau trong cùng một
+                loại cược. Ví dụ: biến thể &quot;dau&quot;, &quot;duoi&quot;
+                trong loại cược &quot;Đầu Đuôi&quot;.
+              </p>
+              <Button
+                onClick={handleAddNew}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Thêm biến thể đầu tiên
+              </Button>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[100px]">ID</TableHead>
-                  <TableHead>Tên biến thể</TableHead>
-                  <TableHead>Mô tả</TableHead>
-                  <TableHead className="w-[100px]">Số chữ số</TableHead>
-                  <TableHead className="w-[100px]">Số lượng</TableHead>
-                  <TableHead className="w-[100px] text-center">
-                    Trạng thái
-                  </TableHead>
-                  <TableHead className="text-right">Thao tác</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {value.map((variant, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="font-medium">{variant.id}</TableCell>
-                    <TableCell>{variant.name}</TableCell>
-                    <TableCell>{variant.description}</TableCell>
-                    <TableCell>{variant.digit_count || "-"}</TableCell>
-                    <TableCell>{variant.number_count || "-"}</TableCell>
-                    <TableCell className="text-center">
-                      <Switch
-                        checked={variant.is_active !== false}
-                        onCheckedChange={() => handleToggleStatus(index)}
-                      />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEdit(index)}
-                        >
-                          Sửa
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleDelete(index)}
-                        >
-                          Xóa
-                        </Button>
-                      </div>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="w-[100px]">ID</TableHead>
+                    <TableHead>Tên biến thể</TableHead>
+                    <TableHead>Mô tả</TableHead>
+                    <TableHead className="w-[100px] text-center">
+                      Số chữ số
+                    </TableHead>
+                    <TableHead className="w-[100px] text-center">
+                      Số lượng
+                    </TableHead>
+                    <TableHead className="w-[100px] text-center">
+                      Trạng thái
+                    </TableHead>
+                    <TableHead className="text-right">Thao tác</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {value.map((variant, index) => (
+                    <TableRow key={index} className="hover:bg-gray-50">
+                      <TableCell className="font-medium text-purple-700">
+                        {variant.id}
+                      </TableCell>
+                      <TableCell>{variant.name}</TableCell>
+                      <TableCell className="text-gray-600 text-sm max-w-xs truncate">
+                        {variant.description}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {variant.digit_count || "-"}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {variant.number_count || "-"}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex justify-center">
+                          <Switch
+                            checked={variant.is_active !== false}
+                            onCheckedChange={() => handleToggleStatus(index)}
+                          />
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(index)}
+                            className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(index)}
+                            className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -211,6 +260,12 @@ export function BetTypeVariantsEditor({
                     {form.formState.errors.id.message}
                   </p>
                 )}
+                {!editingVariant && (
+                  <p className="text-xs text-gray-500">
+                    Đặt ID ngắn gọn, không dấu và không khoảng trắng (VD: dau,
+                    duoi, b2)
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -221,6 +276,9 @@ export function BetTypeVariantsEditor({
                     {form.formState.errors.name.message}
                   </p>
                 )}
+                <p className="text-xs text-gray-500">
+                  Tên đầy đủ để hiển thị cho người dùng
+                </p>
               </div>
             </div>
 
@@ -234,6 +292,9 @@ export function BetTypeVariantsEditor({
                     valueAsNumber: true,
                   })}
                 />
+                <p className="text-xs text-gray-500">
+                  Số chữ số cho mỗi số cược
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -245,9 +306,12 @@ export function BetTypeVariantsEditor({
                     valueAsNumber: true,
                   })}
                 />
+                <p className="text-xs text-gray-500">
+                  Số lượng số cần chọn (nếu có)
+                </p>
               </div>
 
-              <div className="flex items-center space-x-2 pt-8">
+              <div className="flex items-center justify-start pt-8">
                 <Switch
                   id="is_active"
                   checked={form.watch("is_active")}
@@ -255,7 +319,9 @@ export function BetTypeVariantsEditor({
                     form.setValue("is_active", checked)
                   }
                 />
-                <Label htmlFor="is_active">Kích hoạt</Label>
+                <Label htmlFor="is_active" className="ml-2">
+                  Kích hoạt
+                </Label>
               </div>
             </div>
 
@@ -265,7 +331,11 @@ export function BetTypeVariantsEditor({
                 id="description"
                 {...form.register("description")}
                 rows={3}
+                placeholder="Nhập mô tả chi tiết về biến thể cược này..."
               />
+              <p className="text-xs text-gray-500">
+                Mô tả sẽ hiển thị cho người dùng khi họ chọn biến thể này
+              </p>
             </div>
 
             <div className="flex justify-end space-x-2 pt-4">
@@ -276,7 +346,10 @@ export function BetTypeVariantsEditor({
               >
                 Hủy
               </Button>
-              <Button type="submit" variant="lottery">
+              <Button
+                type="submit"
+                className="bg-purple-600 hover:bg-purple-700"
+              >
                 {editingVariant !== null ? "Cập nhật" : "Thêm mới"}
               </Button>
             </div>

@@ -8,12 +8,9 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   TicketIcon,
-  BarChart3,
   History,
-  TrendingUp,
   Menu,
   X,
-  HelpCircle,
   UserIcon,
   LogOut,
 } from "lucide-react";
@@ -75,25 +72,25 @@ export function UserSidebar({ className }: UserSidebarProps) {
       icon: <TicketIcon size={20} />,
     },
     {
-      name: "Kết quả xổ số",
-      href: "/results",
-      icon: <TrendingUp size={20} />,
-    },
-    {
       name: "Lịch sử cược",
       href: "/history",
       icon: <History size={20} />,
     },
-    {
-      name: "Thống kê",
-      href: "/analytics",
-      icon: <BarChart3 size={20} />,
-    },
-    {
-      name: "Trợ giúp",
-      href: "/help",
-      icon: <HelpCircle size={20} />,
-    },
+    // {
+    //   name: "Kết quả xổ số",
+    //   href: "/results",
+    //   icon: <TrendingUp size={20} />,
+    // },
+    // {
+    //   name: "Thống kê",
+    //   href: "/analytics",
+    //   icon: <BarChart3 size={20} />,
+    // },
+    // {
+    //   name: "Trợ giúp",
+    //   href: "/help",
+    //   icon: <HelpCircle size={20} />,
+    // },
   ];
 
   return (

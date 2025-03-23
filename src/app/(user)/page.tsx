@@ -1,6 +1,6 @@
 // src/app/(user)/page.tsx
 import Link from "next/link";
-import { BarChart3, TrendingUp, TicketIcon, History } from "lucide-react";
+import { TrendingUp, TicketIcon, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // Định nghĩa interface cho props của FeatureCard
@@ -64,7 +64,7 @@ export default function Home() {
             Tính năng nổi bật
           </h2>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-6">
             <FeatureCard
               title="Đặt cược dễ dàng"
               description="Hỗ trợ đầy đủ các loại cược với giao diện thân thiện"
@@ -74,14 +74,14 @@ export default function Home() {
               href="/bet"
             />
 
-            <FeatureCard
+            {/* <FeatureCard
               title="Kết quả xổ số"
               description="Cập nhật kết quả nhanh chóng từ tất cả các đài"
               icon={
                 <TrendingUp className="h-10 w-10 text-lottery-secondary p-2 bg-lottery-secondary/10 rounded-xl" />
               }
               href="/results"
-            />
+            /> */}
 
             <FeatureCard
               title="Lịch sử cược"
@@ -92,14 +92,14 @@ export default function Home() {
               href="/history"
             />
 
-            <FeatureCard
+            {/* <FeatureCard
               title="Thống kê chuyên sâu"
               description="Phân tích xu hướng và tỷ lệ thắng/thua"
               icon={
                 <BarChart3 className="h-10 w-10 text-purple-600 p-2 bg-purple-100 rounded-xl" />
               }
               href="/analytics"
-            />
+            /> */}
           </div>
         </div>
       </section>
