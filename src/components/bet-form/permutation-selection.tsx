@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { generatePermutations } from "@/lib/utils";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check, Info } from "lucide-react";
 
 interface PermutationSelectionProps {
   digitCount: number;
@@ -22,6 +22,7 @@ export function PermutationSelection({
   const [preview, setPreview] = useState<string[]>([]);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [recentPermutations, setRecentPermutations] = useState<string[][]>([]);
+  const [customDigitCount, setCustomDigitCount] = useState<number | null>(null);
 
   const currentNumbers = methods.watch("numbers") || [];
 
@@ -31,6 +32,7 @@ export function PermutationSelection({
     setError("");
     setPreview([]);
     setSuccessMessage(null);
+    setCustomDigitCount(null);
   }, [digitCount]);
 
   // Xử lý tạo hoán vị
@@ -47,15 +49,18 @@ export function PermutationSelection({
       return;
     }
 
-    // Kiểm tra độ dài số
-    if (inputValue.length !== digitCount) {
-      setError(`Số gốc phải có ${digitCount} chữ số`);
+    // Kiểm tra độ dài số - hỗ trợ nhập 2 hoặc 3 chữ số
+    const length = inputValue.length;
+    if (length !== 2 && length !== 3) {
+      setError("Số gốc phải có 2 hoặc 3 chữ số");
       return;
     }
 
+    // Lưu lại độ dài số đã nhập để xử lý thêm vào danh sách
+    setCustomDigitCount(length);
+
     // Kiểm tra trường hợp tất cả chữ số giống nhau
     if (new Set(inputValue.split("")).size === 1) {
-      // const single = [...inputValue];
       setPreview([inputValue]);
       setError("");
 
@@ -84,6 +89,13 @@ export function PermutationSelection({
   // Xác nhận chọn các hoán vị
   const confirmSelection = () => {
     if (preview.length === 0) return;
+
+    // Nếu độ dài số khác với digitCount, và người dùng đang nhập số không khớp
+    if (customDigitCount !== digitCount) {
+      const message = `Số chữ số của hoán vị (${customDigitCount}) khác với yêu cầu của loại cược (${digitCount}). Không thể thêm.`;
+      setError(message);
+      return;
+    }
 
     // Thêm các số không trùng lặp
     const newNumbers = [...currentNumbers];
@@ -138,11 +150,14 @@ export function PermutationSelection({
     return result;
   };
 
+  // Kiểm tra xem có thể thêm preview vào danh sách không
+  const canAddToNumbers = customDigitCount === digitCount;
+
   return (
     <div className="space-y-4">
       <div>
         <p className="text-sm mb-2">
-          Nhập số gốc {digitCount} chữ số để tạo các hoán vị
+          Nhập số gốc (2 hoặc 3 chữ số) để tạo các hoán vị
         </p>
         <div className="flex space-x-2">
           <Input
@@ -151,15 +166,18 @@ export function PermutationSelection({
               setInputValue(e.target.value);
               setError("");
               setSuccessMessage(null);
+              setCustomDigitCount(null);
             }}
-            placeholder={`Nhập ${digitCount} chữ số`}
-            maxLength={digitCount}
+            placeholder="Nhập 2 hoặc 3 chữ số"
+            maxLength={3}
             className="flex-1"
           />
           <Button
             type="button"
             onClick={handleGeneratePermutations}
-            disabled={!inputValue || inputValue.length !== digitCount}
+            disabled={
+              !inputValue || inputValue.length < 2 || inputValue.length > 3
+            }
           >
             Tạo hoán vị
           </Button>
@@ -171,9 +189,17 @@ export function PermutationSelection({
           </div>
         )}
 
-        {inputValue && inputValue.length === digitCount && (
+        {inputValue && (inputValue.length === 2 || inputValue.length === 3) && (
           <div className="mt-2 text-xs text-gray-500">
             Sẽ tạo ra khoảng {getMaxPermutations(inputValue)} hoán vị khác nhau
+          </div>
+        )}
+
+        {customDigitCount && customDigitCount !== digitCount && (
+          <div className="mt-2 text-xs text-amber-600 flex items-center">
+            <Info className="h-3 w-3 mr-1" />
+            Lưu ý: Loại cược hiện tại yêu cầu {digitCount} chữ số, nhưng bạn
+            đang tạo hoán vị với {customDigitCount} chữ số.
           </div>
         )}
       </div>
@@ -195,11 +221,15 @@ export function PermutationSelection({
                 size="sm"
                 onClick={confirmSelection}
                 variant={
-                  selectedPreviewCount === preview.length
-                    ? "outline"
-                    : "lottery"
+                  canAddToNumbers
+                    ? selectedPreviewCount === preview.length
+                      ? "outline"
+                      : "lottery"
+                    : "outline"
                 }
-                disabled={selectedPreviewCount === preview.length}
+                disabled={
+                  selectedPreviewCount === preview.length || !canAddToNumbers
+                }
               >
                 {selectedPreviewCount === preview.length ? (
                   <span className="flex items-center">
@@ -218,8 +248,12 @@ export function PermutationSelection({
                 variant={
                   currentNumbers.includes(number) ? "lottery" : "outline"
                 }
-                className="cursor-pointer"
+                className={`cursor-pointer ${
+                  !canAddToNumbers ? "opacity-70" : ""
+                }`}
                 onClick={() => {
+                  if (!canAddToNumbers) return;
+
                   // Toggle this number in the selected numbers
                   if (currentNumbers.includes(number)) {
                     methods.setValue(
@@ -264,6 +298,7 @@ export function PermutationSelection({
                   onClick={(e) => {
                     e.stopPropagation();
                     setPreview(permGroup);
+                    setCustomDigitCount(permGroup[0].length);
                   }}
                 >
                   Xem lại

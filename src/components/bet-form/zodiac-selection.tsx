@@ -99,24 +99,36 @@ export function ZodiacSelection() {
   const currentNumbers = methods.watch("numbers") || [];
   const [selectedZodiac, setSelectedZodiac] = useState<string | null>(null);
 
-  // Hàm chọn con giáp
-  const selectZodiac = (zodiac: (typeof zodiacData)[0]) => {
-    // Thêm các số không trùng lặp
-    const newNumbers = [...currentNumbers];
+  // Hàm toggle con giáp
+  const toggleZodiac = (zodiac: (typeof zodiacData)[0]) => {
+    // Tính số lượng số đã chọn cho con giáp này
+    const selectedCount = zodiac.numbers.filter((num) =>
+      currentNumbers.includes(num)
+    ).length;
 
-    zodiac.numbers.forEach((num) => {
-      if (!newNumbers.includes(num)) {
-        newNumbers.push(num);
-      }
-    });
+    // Nếu tất cả các số của con giáp này đều đã được chọn, bỏ chọn tất cả
+    if (selectedCount === zodiac.numbers.length) {
+      methods.setValue(
+        "numbers",
+        currentNumbers.filter((num) => !zodiac.numbers.includes(num))
+      );
+    } else {
+      // Ngược lại, thêm các số chưa được chọn
+      const newNumbers = [...currentNumbers];
+      zodiac.numbers.forEach((num) => {
+        if (!newNumbers.includes(num)) {
+          newNumbers.push(num);
+        }
+      });
+      methods.setValue("numbers", newNumbers);
+    }
 
-    methods.setValue("numbers", newNumbers);
     setSelectedZodiac(zodiac.id);
   };
 
   return (
     <div className="space-y-4">
-      <p className="text-sm mb-2">Chọn con giáp để thêm các số tương ứng</p>
+      <p className="text-sm mb-2">Chọn con giáp để thêm/bỏ các số tương ứng</p>
 
       <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
         {zodiacData.map((zodiac) => {
@@ -140,7 +152,7 @@ export function ZodiacSelection() {
                   : "outline"
               }
               className="flex-col h-auto py-2 px-3 relative"
-              onClick={() => selectZodiac(zodiac)}
+              onClick={() => toggleZodiac(zodiac)}
               title={zodiac.description}
             >
               <span className="text-sm font-medium mb-1">
@@ -231,6 +243,10 @@ export function ZodiacSelection() {
           Mỗi con giáp có các số tương ứng theo quy tắc cố định trong xổ số. Các
           số này dựa trên quy luật 12 con giáp, được tính theo số dư khi chia
           cho 12.
+        </p>
+        <p className="mt-1 italic">
+          Nhấn lại vào con giáp đã chọn đủ số để bỏ chọn tất cả các số của con
+          giáp đó.
         </p>
       </div>
     </div>
