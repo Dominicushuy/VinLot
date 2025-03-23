@@ -32,12 +32,17 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
     const pageSize = parseInt(searchParams.get("pageSize") || "10");
+    const search = searchParams.get("search");
+    const fromDate = searchParams.get("fromDate");
+    const toDate = searchParams.get("toDate");
+    const betType = searchParams.get("betType");
+    const provinceId = searchParams.get("provinceId");
 
     // Calculate offset for pagination
     const offset = (page - 1) * pageSize;
 
     console.log(
-      `Fetching pending bets with page=${page}, pageSize=${pageSize}, offset=${offset}`
+      `Fetching pending bets with page=${page}, pageSize=${pageSize}, offset=${offset}, search=${search}, fromDate=${fromDate}, toDate=${toDate}, betType=${betType}, provinceId=${provinceId}`
     );
 
     // 1. Lấy danh sách các cược pending
@@ -46,6 +51,28 @@ export async function GET(request: Request) {
       .select("*", { count: "exact" })
       .eq("status", "pending")
       .order("draw_date", { ascending: false });
+
+    // Thêm các bộ lọc
+    if (search) {
+      // Tìm kiếm số cược hoặc tỉnh
+      query = query.or(`numbers.cs.{${search}},province_id.ilike.%${search}%`);
+    }
+
+    if (fromDate) {
+      query = query.gte("draw_date", fromDate);
+    }
+
+    if (toDate) {
+      query = query.lte("draw_date", toDate);
+    }
+
+    if (betType && betType !== "all") {
+      query = query.eq("bet_type", betType);
+    }
+
+    if (provinceId && provinceId !== "all") {
+      query = query.eq("province_id", provinceId);
+    }
 
     // Thêm phân trang
     query = query.range(offset, offset + pageSize - 1);
@@ -129,11 +156,14 @@ export async function GET(request: Request) {
 
     // Check if there are more items
     const hasMore = count ? offset + pageSize < count : false;
+    const totalPages = count ? Math.ceil(count / pageSize) : 1;
 
     return NextResponse.json({
       bets: transformedBets,
       hasMore,
       total: count || 0,
+      totalPages,
+      currentPage: page,
     });
   } catch (error: any) {
     console.error("Error in pending-bets API:", error);

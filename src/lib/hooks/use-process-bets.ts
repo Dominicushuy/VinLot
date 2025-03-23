@@ -2,101 +2,74 @@
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 
-interface ProcessResult {
-  success: boolean;
+interface ProcessAllResult {
   processed: number;
   won: number;
   total: number;
-  updated?: number;
+  updated: number;
+}
+
+interface ProcessSingleResult {
+  id: string;
+  status: "won" | "lost" | "pending";
+  win_amount?: number;
+  newly_processed?: boolean;
 }
 
 export function useProcessBets() {
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
-  const [result, setResult] = useState<ProcessResult | null>(null);
+  const [result, setResult] = useState<ProcessAllResult | null>(null);
 
-  // Xử lý đối soát tất cả cược
-  const processAllBets = async (): Promise<ProcessResult | null> => {
+  // Xử lý đối soát tất cả các cược đang chờ
+  const processAllBets = async (): Promise<ProcessAllResult | null> => {
     try {
       setIsProcessing(true);
-      setResult(null);
 
+      // Hiển thị toast đang xử lý
+      toast({
+        title: "Đang đối soát",
+        description: "Đang xử lý tất cả các cược chưa đối soát...",
+      });
+
+      // Gọi API để đối soát tất cả
       const response = await fetch("/api/admin/process-all-pending", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Đối soát thất bại");
+        throw new Error(errorData.error || "Lỗi khi đối soát cược");
       }
 
       const data = await response.json();
 
-      // Lưu kết quả
-      setResult(data);
+      // Hiển thị kết quả
+      if (data.processed > 0) {
+        toast({
+          title: "Đối soát thành công",
+          description: `Đã xử lý ${data.processed} cược, ${data.won} cược thắng`,
+          variant: "lottery",
+        });
+      } else {
+        toast({
+          title: "Không có cược nào được xử lý",
+          description:
+            data.message ||
+            "Không có cược để đối soát hoặc chưa có kết quả xổ số",
+        });
+      }
 
-      // Hiển thị thông báo
-      toast({
-        title: "Đối soát thành công",
-        description: `Đã xử lý ${data.processed} cược, ${data.won} cược thắng.`,
-      });
+      // Lưu kết quả để hiển thị
+      setResult(data);
 
       return data;
     } catch (error: any) {
       console.error("Error processing all bets:", error);
 
       toast({
-        title: "Lỗi khi đối soát",
-        description:
-          error.message || "Đối soát thất bại. Vui lòng thử lại sau.",
-        variant: "destructive",
-      });
-
-      return null;
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  // Xử lý đối soát theo ngày
-  const processBetsByDate = async (
-    date: string
-  ): Promise<ProcessResult | null> => {
-    try {
-      setIsProcessing(true);
-      setResult(null);
-
-      const response = await fetch("/api/admin/process-results", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ date }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Đối soát thất bại");
-      }
-
-      const data = await response.json();
-
-      // Lưu kết quả
-      setResult(data);
-
-      // Hiển thị thông báo
-      toast({
-        title: "Đối soát thành công",
-        description: `Đã xử lý ${data.processed} cược, ${data.won} cược thắng.`,
-      });
-
-      return data;
-    } catch (error: any) {
-      console.error(`Error processing bets for date ${date}:`, error);
-
-      toast({
-        title: "Lỗi khi đối soát",
-        description:
-          error.message || "Đối soát thất bại. Vui lòng thử lại sau.",
+        title: "Lỗi đối soát",
+        description: error.message || "Đã xảy ra lỗi khi đối soát cược",
         variant: "destructive",
       });
 
@@ -107,44 +80,64 @@ export function useProcessBets() {
   };
 
   // Xử lý đối soát một cược cụ thể
-  const processSingleBet = async (betId: string): Promise<any> => {
+  const processSingleBet = async (
+    betId: string
+  ): Promise<ProcessSingleResult | null> => {
     try {
       setIsProcessing(true);
 
+      // Gọi API để đối soát một cược
       const response = await fetch(`/api/bets/check/${betId}`, {
         method: "GET",
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Kiểm tra cược thất bại");
+        throw new Error(errorData.error || "Lỗi khi đối soát cược");
       }
 
       const data = await response.json();
 
-      if (data.status === "pending") {
+      // Hiển thị kết quả nếu mới được xử lý
+      if (data.newly_processed) {
+        if (data.status === "won") {
+          toast({
+            title: "Cược thắng",
+            description: `Phiếu cược đã thắng ${new Intl.NumberFormat("vi-VN", {
+              style: "currency",
+              currency: "VND",
+              maximumFractionDigits: 0,
+            }).format(data.win_amount || 0)}`,
+            variant: "lottery",
+          });
+        } else if (data.status === "lost") {
+          toast({
+            title: "Cược thua",
+            description: "Phiếu cược không trúng thưởng",
+          });
+        }
+      } else if (data.already_processed) {
         toast({
-          title: "Chưa có kết quả",
-          description: "Chưa có kết quả xổ số cho phiếu cược này",
+          title: "Đã đối soát trước đây",
+          description: `Phiếu cược này đã được đối soát, kết quả: ${
+            data.status === "won" ? "Thắng" : "Thua"
+          }`,
         });
-      } else {
+      } else if (data.status === "pending") {
         toast({
-          title: "Đối soát thành công",
-          description:
-            data.status === "won"
-              ? `Phiếu trúng thưởng! Tiền thắng: ${data.win_amount.toLocaleString()} VND`
-              : "Phiếu không trúng thưởng",
-          variant: data.status === "won" ? "default" : "destructive",
+          title: "Chưa thể đối soát",
+          description: "Chưa có kết quả xổ số cho phiếu cược này",
+          variant: "destructive",
         });
       }
 
       return data;
     } catch (error: any) {
-      console.error(`Error processing bet ${betId}:`, error);
+      console.error("Error processing single bet:", error);
 
       toast({
-        title: "Lỗi",
-        description: error.message || "Kiểm tra cược thất bại",
+        title: "Lỗi đối soát",
+        description: error.message || "Đã xảy ra lỗi khi đối soát cược",
         variant: "destructive",
       });
 
@@ -158,7 +151,6 @@ export function useProcessBets() {
     isProcessing,
     result,
     processAllBets,
-    processBetsByDate,
     processSingleBet,
   };
 }
